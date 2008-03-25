@@ -1,0 +1,235 @@
+#include "MainApp.h"
+
+#include "CSceneManager.h"      // We need these to destroy the managers from the
+#include "CPhysicsManager.h"    // app instead of the window
+#include "GOCS/CGOCManager.h"   // The component manager
+
+// Visual component templates
+#include "GOCS/Templates/GOCTVisualVASphere.h"  
+#include "GOCS/Templates/GOCTVisualVAPlane.h"
+#include "GOCS/Templates/GOCTVisualIMQuad.h"
+// Physical component templates
+#include "GOCS/Templates/GOCTPhysicsPoint.h"
+#include "GOCS/Templates/GOCTPhysicsCloth.h"
+// Collision componenet templates
+#include "GOCS/Templates/GOCTBoundingSphere.h"
+#include "GOCS/Templates/GOCTBoundingPlane.h"
+#include "GOCS/Templates/GOCTBoundingDWBox.h"
+
+// The world object class
+#include "GOCS/CGameObject.h"
+
+using namespace tlib::gocs;
+using namespace tlib;
+
+static MainApp g_MainApp;
+
+// ----------------------------------------------------------------------------
+MainApp& MainApp::Get() { return g_MainApp; }
+
+// ----------------------------------------------------------------------------
+void MainApp::OnCreate()
+{
+    CGOCManager::_Instance();
+    InitTemplates();
+    InitPlanes();
+    InitCloth();
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::OnDestroy()
+{
+    CGOCManager::Destroy();
+
+    // Delete spheres
+    ObjectList::iterator iter = m_Spheres.begin();
+    for(; iter != m_Spheres.end(); ++iter )
+        delete (*iter);
+
+    // Delete planes
+    for( int i=0; i<MAX_PLANES; ++i )
+        delete m_Planes[i];
+
+    // Delete cloth
+    delete m_Cloth;
+
+    // Destroy managers after all objects are destroy !!!
+    MGRScene::Destroy();
+    MGRPhysics::Destroy();
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::RemoveLastSphere()
+{
+    if( m_Spheres.size() )
+    {
+        // Get last element
+        CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
+
+        delete el;
+        el = 0;
+
+        m_Spheres.pop_back();
+    }
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::AddBigSphere()
+{
+    CGameObject *pSphere = new CGameObject("MyBigSphere");
+    ADD_GOC( pSphere, "VisualBigSphere" );
+    ADD_GOC( pSphere, "PhysicsBigPoint"   );
+    ADD_GOC( pSphere, "BoundingBigSphere" );
+
+    m_Spheres.push_back(pSphere);
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::AddSmallSphere()
+{
+    CGameObject *pSphere = new CGameObject("MySmallSphere");
+    ADD_GOC( pSphere, "VisualSmallSphere" );
+    ADD_GOC( pSphere, "PhysicsSmallPoint"   );
+    ADD_GOC( pSphere, "BoundingSmallSphere" );
+
+    m_Spheres.push_back(pSphere);
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::InitTemplates()
+{
+    // CUSTOM SPHERE TEMPLATE
+    GOCTVisualVASphere *tplBig = new GOCTVisualVASphere("VisualBigSphere");
+    tplBig->SetRadius(0.05f);
+    tplBig->SetSlices(15);
+    tplBig->SetStacks(15);
+    CGOCManager::Instance().SetTemplate( tplBig );
+
+    GOCTVisualVASphere *tplSmall = new GOCTVisualVASphere("VisualSmallSphere");;
+    tplSmall->SetRadius(0.02f);
+    tplSmall->SetSlices(10);
+    tplSmall->SetStacks(10);
+    CGOCManager::Instance().SetTemplate( tplSmall );
+
+
+    // CUSTOM PHYSICAL POINT TEMPLATE
+    GOCTPhysicsPoint *tplPhyPoi = new GOCTPhysicsPoint("PhysicsBigPoint");
+    tplPhyPoi->GetBody().SetMass(1.0f);
+    CGOCManager::Instance().SetTemplate( tplPhyPoi );
+
+    tplPhyPoi = new GOCTPhysicsPoint("PhysicsSmallPoint");
+    tplPhyPoi->GetBody().SetMass(0.25f);
+    CGOCManager::Instance().SetTemplate( tplPhyPoi );
+
+
+    // CUSTOM BOUNDING SPHERE TEMPLATE
+    GOCTBoundingSphere *tplBsph = new GOCTBoundingSphere("BoundingBigSphere");
+    tplBsph->SetRadius(0.05f);
+    tplBsph->SetElasticity(0.95f);
+    tplBsph->SetFriction(0.1f);
+    CGOCManager::Instance().SetTemplate( tplBsph );
+    
+    tplBsph = new GOCTBoundingSphere("BoundingSmallSphere");
+    tplBsph->SetRadius(0.02f);
+    tplBsph->SetElasticity(0.95f);
+    tplBsph->SetFriction(0.1f);
+    CGOCManager::Instance().SetTemplate( tplBsph );
+
+
+    // PLANE TEMPLATES
+    GOCTVisualIMQuad *tplPlane = new GOCTVisualIMQuad("VisualPlane");
+    tplPlane->SetHalfSize( Vec2f( 0.5f, 0.5f ) );
+    CGOCManager::Instance().SetTemplate( tplPlane );
+
+    GOCTBoundingPlane *tplBpln = new GOCTBoundingPlane("BoundingPlane");
+    tplBpln->SetHalfSize( Vec2f( 0.5f, 0.5f ) );
+    tplBpln->SetNormal( Vec3f( 0.0f, 0.0f, 1.0f ) );
+    tplBpln->SetElasticity(0.95f);
+    tplBpln->SetFriction(0.1f);
+    CGOCManager::Instance().SetTemplate( tplBpln );
+
+    // CLOTH TEMPLATES
+    GOCTVisualVAPlane *vaPlane = new GOCTVisualVAPlane("ClothVisualPlane");
+    vaPlane->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
+    vaPlane->SetStacks(20);
+    vaPlane->SetSlices(30);
+    CGOCManager::Instance().SetTemplate( vaPlane );
+
+    GOCTBoundingDWBox *tplBbox = new GOCTBoundingDWBox("ClothBoundingDef");
+    //tplBbox->SetHalfSize( Vec3f( 0.25f, 0.5f, 0.2f ) );
+    tplBbox->SetElasticity(0.0f);
+    tplBbox->SetFriction(1.0f);
+    CGOCManager::Instance().SetTemplate( tplBbox );
+
+    GOCTPhysicsCloth *tplDfmr = new GOCTPhysicsCloth("ClothDeformable");
+    tplDfmr->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
+    tplDfmr->SetStacks(20);
+    tplDfmr->SetSlices(30);
+    tplDfmr->SetMass(5.0f);
+    CGOCManager::Instance().SetTemplate( tplDfmr );
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::InitPlanes()
+{
+    const float POSITION = 0.5f;
+
+    // Back plane
+    int iP = 0;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, -POSITION );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+
+    // Left plane
+    ++iP;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( -POSITION, 0.0f, 0.0f );
+    m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+
+    // Right plane
+    ++iP;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( POSITION, 0.0f, 0.0f );
+    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+
+    // Top plane
+    ++iP;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, POSITION, 0.0f );
+    m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+
+    // Bottom plane
+    ++iP;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, -POSITION, 0.0f );
+    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+
+    // Front plane
+    ++iP;
+    m_Planes[iP] = new CGameObject("MyPlane");
+    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, POSITION );
+    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    ADD_GOC( m_Planes[iP], "VisualPlane" );
+    ADD_GOC( m_Planes[iP], "BoundingPlane" );
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::InitCloth()
+{
+    m_Cloth = new CGameObject("MyCloth");
+    m_Cloth->GetTransform().GetPosition().Set( -0.25f, 0.0f, 0.0f );
+    //m_Cloth->GetTransform().GetPosition().Set( 0.0f, 0.4f, 0.0f );
+    m_Cloth->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    ADD_GOC( m_Cloth, "ClothVisualPlane" );
+    ADD_GOC( m_Cloth, "ClothDeformable" );
+    ADD_GOC( m_Cloth, "ClothBoundingDef" );
+}
