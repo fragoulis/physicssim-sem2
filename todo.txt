@@ -1,0 +1,57 @@
+ Major Tasks
+-------------------------------------
+
+ * To solid self [prosoxi pws 8a ginetai i enallagi me to cloth]
+ * Physics
+   - Test friction
+ * Deformable ball
+ * Threading
+ * Bitmal renderer
+ * Recording
+ * Server
+ * Client
+ * Gui
+ * Optimizations
+   - Rethink the physics cycle
+   - Intercomponent event system
+   - Na doulepsei to wrapper bounding volume gia ta deformables
+   - Na dokimasw allo integrator kai na megalwsw to timestep
+   - Instead of one particle in each vertex, one particle everytwo or three vertices, 
+     and interpolation for the rest
+   - Hardcode rendering lists, like physics, to gain speed, if there is no time for rendering tree
+   - Vertex array manager, wste na min krataei ka8e visual componenet dika
+     tou vertex, normal, index kai texture data ti stigmi pou gia idia 
+     objects, afta ta data einai idia.
+   - Ka8e bounding volume na exei direct access pointer sto physics tou! [kai me ta planes pou den exoun physics?]
+
+
+--------------------------------------------------------------------------------------
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+--------------------------------------------------------------------------------------
+
+  *** Tropo na activate/deactivate antikeimena
+      Prepei na ta afairoume aptis listes? eidika gia to cloth/self
+      - to cloth exei physics, to rafi den exei
+      - kai ta dio exoun, visual kai collision information
+      - opote, gia to active flag mporei na mpei 
+        - kai se ka8e component (wste na afaireitai aptis listes
+        - kai se ka8e gameobject wste na apenergopoiei ola ta components tou
+        - kai otan apenergopoieitai to object, na stelnei to event stous listeners tou !!!!
+        - ama einai na ginei etsi, tote, giati na min kanw to e3is, na apenergopoiw mono to 
+          physics component sto toggle rafi/cloth.
+          - etsi wste to cloth na symperiferetai san rigid body, xwris particles ??????
+
+  *** Create ObjectManager [GameObject Factory]
+    * Put CHash to public tlib namespace
+    
+***** dhmiourgia rendering tree (vertex array, texture, shader, material, blending)
+***** eisagwgi event system meta3y components
+      -- poli shmantiko
+      --- an xreistei ena object, i ena component enos object na kanei kati to opoio prepei me ti seira tou
+          na enimerwsi mia alli domi mesa sta components tou, tote gia afti ti leitourgia, dhmiourgoume
+          ena event to opoio stelnetai ka8e fora pou afti ekteleitai.
+          Sti synexeia, ka8e component pou endiaferetai gia tin epikeimeni allagi, kanei register se afto
+          to event gia na to 'akouei' otan stelnetai.
+     
+ **** Air drag and gravity na eisagontai me gui (na min einai constant)
+ 
