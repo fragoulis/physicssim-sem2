@@ -1,5 +1,3 @@
-#ifndef __TLIB_CMATERIALMANAGER_H__
-#define __TLIB_CMATERIALMANAGER_H__
 #pragma once
 #include "Singleton.h"
 #include <map>
@@ -36,5 +34,3 @@ private:
 typedef CMaterialManager MGRMaterial;
 
 } // end namespace tlib
-
-#endif // __TLIB_CMATERIALMANAGER_H__
