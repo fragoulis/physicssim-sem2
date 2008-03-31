@@ -3,7 +3,7 @@
 #include "CHash.h"
 #include <map>
 
-#define ADD_GOC( go, goc ) { go->SetGOC( CGOCManager::Instance().CreateGOC( goc ) ); }
+#define ADD_GOC( go, goc ) { go->SetGOC( CGOCManager::Get().CreateGOC( goc ) ); }
 
 namespace tlib
 {

@@ -63,11 +63,11 @@ void MainWindow::OnCreate()
     glEnable        (GL_DEPTH_TEST);
     glShadeModel    (GL_SMOOTH);
 
-    MGRScene::_Instance().Init();
-    MGRPhysics::_Instance().Init();
-    Clock::_Instance().Start( MGRTimeSrc::SRC_CLOCK );
-    InputRec::_Instance().Clear(m_RecData);
-    InputReplay::_Instance();
+    MGRScene::_Get().Init();
+    MGRPhysics::_Get().Init();
+    Clock::_Get().Start( MGRTimeSrc::SRC_CLOCK );
+    InputRec::_Get().Clear(m_RecData);
+    InputReplay::_Get();
 
     // Initialize camera's position and direction
     m_Camera.SetPosition( Vec3f( 0.0f, 0.25f, 1.25f ) );
@@ -85,7 +85,7 @@ void MainWindow::OnCreate()
 //-----------------------------------------------------------------------------
 void MainWindow::OnDisplay()
 {
-    Clock::Instance().FrameStep();
+    Clock::Get().FrameStep();
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     SetupView();
@@ -93,7 +93,7 @@ void MainWindow::OnDisplay()
     m_Lights[0].Apply();
 
     //RenderHelpGrid( 40, 0.5f );
-    MGRScene::Instance().Render();
+    MGRScene::Get().Render();
     PrintStats();
 
     CGameObject *cloth = MainApp::Get().GetCloth();
@@ -106,7 +106,7 @@ void MainWindow::OnDisplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnIdle()
 {
-    float delta = (float)Clock::Instance().GetTimeDelta();
+    float delta = (float)Clock::Get().GetTimeDelta();
     
     // =========================================================================
     if( m_AppState == AS_REPLAY )
@@ -118,15 +118,15 @@ void MainWindow::OnIdle()
     if( !m_bPause )
     {
         RotateCube( delta );
-        MGRPhysics::Instance().Update( delta );
+        MGRPhysics::Get().Update( delta );
     }
 
     // =========================================================================
     if( m_AppState == AS_RECORD )
     {
-        m_RecData.time = Clock::Instance().GetCurrentFeed();
+        m_RecData.time = Clock::Get().GetCurrentFeed();
         m_RecData.mouse = m_bIsMouseDown;
-        InputRec::Instance().Record( m_RecData );
+        InputRec::Get().Record( m_RecData );
     }
     // =========================================================================
 
@@ -135,9 +135,9 @@ void MainWindow::OnIdle()
 //-----------------------------------------------------------------------------
 void MainWindow::HandleReplay()
 {
-    if( !InputReplay::Instance().Read( m_RecData ) )
+    if( !InputReplay::Get().Read( m_RecData ) )
     {
-        Clock::Instance().Start( MGRTimeSrc::SRC_CLOCK );
+        Clock::Get().Start( MGRTimeSrc::SRC_CLOCK );
         m_AppState = AS_NORMAL;
         return;
     }
@@ -202,11 +202,11 @@ void MainWindow::KeyboardOnNormal( int key )
     else if( key == 'o' )
     {   
         // Enable replay if recorded data exist
-        if( !InputReplay::Instance().Begin() ) return;
+        if( !InputReplay::Get().Begin() ) return;
     
         Reset();
         m_AppState = AS_REPLAY;
-        Clock::Instance().Start( MGRTimeSrc::SRC_FILE );
+        Clock::Get().Start( MGRTimeSrc::SRC_FILE );
     }
     else
     {
@@ -221,7 +221,7 @@ void MainWindow::KeyboardOnRecord( int key )
     {
         // Disable recording
         m_AppState = AS_NORMAL;
-        InputRec::Instance().End();
+        InputRec::Get().End();
     }
     else if( key == 'o' ) { /* Do nothing for 'o' */ }
     else
@@ -241,7 +241,7 @@ void MainWindow::KeyboardOnReplay( int key )
     if( key == 'o' )
     {
         // Disable replay
-        Clock::Instance().Start( MGRTimeSrc::SRC_CLOCK );
+        Clock::Get().Start( MGRTimeSrc::SRC_CLOCK );
         m_AppState = AS_NORMAL;
     }
 }
@@ -431,7 +431,7 @@ void MainWindow::CheckRotationAngles()
 void MainWindow::Quit()
 {
     if( m_AppState == AS_RECORD ) {
-        InputRec::Instance().End(); // Stop recoding
+        InputRec::Get().End(); // Stop recoding
     }
 
     Close();

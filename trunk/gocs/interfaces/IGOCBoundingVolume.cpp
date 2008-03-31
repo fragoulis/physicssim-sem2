@@ -19,14 +19,14 @@ m_fFriction(tpl->GetFriction())
 
 IGOCBoundingVolume::~IGOCBoundingVolume()
 {
-    MGRPhysics::_Instance().UnregisterCollidable(this);
+    MGRPhysics::_Get().UnregisterCollidable(this);
 }
 
 // ----------------------------------------------------------------------------
 void IGOCBoundingVolume::SetVolumeType( VolumeType iType )
 {
     m_iType = iType;
-    MGRPhysics::_Instance().RegisterCollidable(this);
+    MGRPhysics::_Get().RegisterCollidable(this);
 }
 
 // ----------------------------------------------------------------------------

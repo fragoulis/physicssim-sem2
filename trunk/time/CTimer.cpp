@@ -8,7 +8,7 @@ m_dElapsedTime(0.0),
 m_bIsRunning(false),
 m_fScale(1.0f)
 {
-    Clock::Instance().AddTimer(this);
+    Clock::Get().AddTimer(this);
 }
 
 CTimer::CTimer(int i){}
