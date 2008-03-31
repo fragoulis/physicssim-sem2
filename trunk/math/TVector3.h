@@ -1,5 +1,3 @@
-#ifndef __TLIB_MATH_VECTOR3_H__
-#define __TLIB_MATH_VECTOR3_H__
 #pragma once
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -311,5 +309,3 @@ typedef TVector3<float> Vec3f;
 
 } // end namespace math
 } // end namespace tlib
-
-#endif // __TLIB_MATH_VECTOR3F_H__

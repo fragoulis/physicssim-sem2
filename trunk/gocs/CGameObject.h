@@ -54,6 +54,10 @@ public:
     void SetID( ObjectId_t id ) { m_ID = id; }
     void SetTransform( const CTransform &tr ) { m_Transform = tr; }
 
+    bool Is( const char *id ) const {
+        return (m_ID == CHash::_(id));
+    }
+
     //! Adds a component to the object's component list
     //! @param newGOC Pointer to the new component
     //! @return The component that was replaced or NULL if no component pre-existed

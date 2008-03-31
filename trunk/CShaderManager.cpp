@@ -47,6 +47,10 @@ void CShaderManager::Init()
                      "shaders/light_w_texture.vert", 
                      "shaders/light_w_texture.frag" ) ) {
     }
+    if( !addProgram( LIGHT_W_TEXTURE_REFRACT, 
+                     "shaders/light_w_texture.vert", 
+                     "shaders/light_w_texture_refract.frag" ) ) {
+    }
 }
 
 // ------------------------------------------------------------------------

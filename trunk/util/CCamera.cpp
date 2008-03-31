@@ -65,15 +65,15 @@ void CCamera::LookAt( const Vec3f &vLookAt )
     {
         qRot.FromVector( alpha, normal );
         m_vView = viewTest;
-        qRot.Rotate(m_vUp);
     } 
     else 
     {
         qRot.FromVector( -alpha, normal );
         qRot.Rotate(m_vView);
-        qRot.Rotate(m_vUp);
+        
     }
-    m_vView = vNewView;
+    qRot.Rotate(m_vUp);
+    //m_vView = vNewView;
 
     // If the dot product is near to -1, it means we look the wrong way.
     // To correct this, we just rotate pi radians (a half circle).

@@ -2,10 +2,11 @@
 #include "CParticle.h"
 using namespace tlib::physics;
 
-CSpringDamper::CSpringDamper():
-m_k(200.0f),
-m_d(1.0f)
-{}
+CSpringDamper::CSpringDamper()
+{
+    m_k = 200.0f;
+    m_d = 1.0f;
+}
 
 void CSpringDamper::Compute()
 {
@@ -17,14 +18,14 @@ void CSpringDamper::Compute()
     // Spring force
     float fSpring = m_k * ( fLength - m_fRestLength );
 
-    // Current velocities
+    //// Current velocities
     //float fVel1 = vNormal.Dot( m_Particles[0]->GetVelocity() );
     //float fVel2 = vNormal.Dot( m_Particles[1]->GetVelocity() );
 
-    // Damping force
+    //// Damping force
     //float fDamper = m_d * ( fVel1 - fVel2 );
 
-    // Total spring-damper force
+    //// Total spring-damper force
     //Vec3f vTotal = ( fSpring - fDamper ) * vNormal;
     Vec3f vTotal = fSpring * vNormal;
 

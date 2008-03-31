@@ -18,8 +18,8 @@ using tlib::gocs::GOCBoundingDeformable;
 // ----------------------------------------------------------------------------
 CPhysicsManager::CPhysicsManager()
 {
-    m_fGravity  = -5.81f; // this MUST be in the constructor
-    m_fTimeStep = 0.001f;
+    m_fGravity  = -7.81f; // this MUST be in the constructor
+    m_fTimeStep = 0.001f; // 1000Hz
 }
 
 void CPhysicsManager::Init()
@@ -36,7 +36,10 @@ void CPhysicsManager::Update( float delta )
         BodyList::const_iterator i = m_Bodies.begin();
             for(; i!= m_Bodies.end(); ++i )
                 (*i)->Update( delta );
-    } 
+
+        CheckCollisions();
+        m_CollisionStack.ResolveCollisions( delta );
+    }
     else {
         float accum = delta;
         while( accum >= m_fTimeStep )
@@ -52,13 +55,14 @@ void CPhysicsManager::Update( float delta )
         }
     }
 
+    //BodyList::const_iterator i = m_Bodies.begin();
     //for(; i!= m_Bodies.end(); ++i )
     //    (*i)->Update( delta );
 
-    // Collision detection
+    //// Collision detection
     //CheckCollisions();
 
-    // Collision resoving
+    //// Collision resoving
     //m_CollisionStack.ResolveCollisions( delta );
 }
 

@@ -7,6 +7,16 @@ namespace tlib
 namespace physics
 {
 
+    struct State
+    {
+        Vec3f x, v;
+    };
+
+    struct Derivative
+    {
+        Vec3f dx, dv;
+    };
+
 /**
  * @class CParticle
  *
@@ -19,7 +29,7 @@ private:
     Vec3f m_vPosition;
 
     //! The velocity of the particle
-    Vec3f m_vVelocity;
+    Vec3f m_vVelocity;;
 
     //! The acceleration of the particle computed by the forces acting on it
     Vec3f m_vAcceleration;
@@ -33,6 +43,9 @@ private:
     //! The inverse mass ( 1 / mass ) of the particle.
     //! Inverse mass of zero means the object is unmovable, no forces can act on it.
     float m_fInverseMass;
+
+    //! Common drag factor for particles
+    float m_fDrag;
 
 public:
     CParticle();
@@ -71,6 +84,14 @@ public:
 private:
     //! Updates particle with Euler 1st order accurate method
     void IntegrateEuler( float delta );
+    
+    // Trial integrators
+    void IntegrateMidpoint( float delta );
+    void IntegrateRK4( float delta );
+
+    Derivative Evaluate( const State &initial );
+    Derivative Evaluate( const State &initial, float dt, const Derivative &d );
+    Vec3f Acceleration( const State &state );
 
 }; // end CParticle
 
