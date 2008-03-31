@@ -9,7 +9,7 @@ class Singleton
 {
 public:
     //! Returns the object but also checks if the object exists
-    static T& _Instance()
+    static T& _Get()
     {
         if( 0 == pInstance ) {  
             pInstance = new T;
@@ -19,7 +19,7 @@ public:
     }
 
     //! Returns the object
-    static T& Instance() {
+    static T& Get() {
         assert(pInstance);
         return *pInstance;
     }

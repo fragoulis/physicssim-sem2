@@ -19,6 +19,9 @@
 // The world object class
 #include "GOCS/CGameObject.h"
 
+using namespace tlib::gocs;
+using namespace tlib;
+
 static MainApp g_MainApp;
 
 // ----------------------------------------------------------------------------
@@ -27,12 +30,10 @@ MainApp& MainApp::Get() { return g_MainApp; }
 // ----------------------------------------------------------------------------
 void MainApp::OnCreate()
 {
-    CGOCManager::_Instance();
+    CGOCManager::_Get();
     InitTemplates();
     InitPlanes();
     InitCloth();
-
-    m_tPhysics.Start();
 }
 
 // ----------------------------------------------------------------------------
@@ -117,23 +118,23 @@ void MainApp::InitTemplates()
     tplBig->SetRadius(0.05f);
     tplBig->SetSlices(15);
     tplBig->SetStacks(15);
-    CGOCManager::Instance().SetTemplate( tplBig );
+    CGOCManager::Get().SetTemplate( tplBig );
 
     GOCTVisualVASphere *tplSmall = new GOCTVisualVASphere("VisualSmallSphere");;
     tplSmall->SetRadius(0.02f);
     tplSmall->SetSlices(10);
     tplSmall->SetStacks(10);
-    CGOCManager::Instance().SetTemplate( tplSmall );
+    CGOCManager::Get().SetTemplate( tplSmall );
 
 
     // CUSTOM PHYSICAL POINT TEMPLATE
     GOCTPhysicsPoint *tplPhyPoi = new GOCTPhysicsPoint("PhysicsBigPoint");
     tplPhyPoi->GetBody().SetMass(1.0f);
-    CGOCManager::Instance().SetTemplate( tplPhyPoi );
+    CGOCManager::Get().SetTemplate( tplPhyPoi );
 
     tplPhyPoi = new GOCTPhysicsPoint("PhysicsSmallPoint");
     tplPhyPoi->GetBody().SetMass(0.25f);
-    CGOCManager::Instance().SetTemplate( tplPhyPoi );
+    CGOCManager::Get().SetTemplate( tplPhyPoi );
 
 
     // CUSTOM BOUNDING SPHERE TEMPLATE
@@ -141,46 +142,46 @@ void MainApp::InitTemplates()
     tplBsph->SetRadius(0.05f);
     tplBsph->SetElasticity(0.95f);
     tplBsph->SetFriction(0.1f);
-    CGOCManager::Instance().SetTemplate( tplBsph );
+    CGOCManager::Get().SetTemplate( tplBsph );
     
     tplBsph = new GOCTBoundingSphere("BoundingSmallSphere");
     tplBsph->SetRadius(0.02f);
     tplBsph->SetElasticity(0.95f);
     tplBsph->SetFriction(0.1f);
-    CGOCManager::Instance().SetTemplate( tplBsph );
+    CGOCManager::Get().SetTemplate( tplBsph );
 
 
     // PLANE TEMPLATES
     GOCTVisualIMQuad *tplPlane = new GOCTVisualIMQuad("VisualPlane");
     tplPlane->SetHalfSize( Vec2f( 0.5f, 0.5f ) );
-    CGOCManager::Instance().SetTemplate( tplPlane );
+    CGOCManager::Get().SetTemplate( tplPlane );
 
     GOCTBoundingPlane *tplBpln = new GOCTBoundingPlane("BoundingPlane");
     tplBpln->SetHalfSize( Vec2f( 0.5f, 0.5f ) );
     tplBpln->SetNormal( Vec3f( 0.0f, 0.0f, 1.0f ) );
     tplBpln->SetElasticity(0.95f);
     tplBpln->SetFriction(0.1f);
-    CGOCManager::Instance().SetTemplate( tplBpln );
+    CGOCManager::Get().SetTemplate( tplBpln );
 
     // CLOTH TEMPLATES
     GOCTVisualVAPlane *vaPlane = new GOCTVisualVAPlane("ClothVisualPlane");
     vaPlane->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    vaPlane->SetStacks(10);
-    vaPlane->SetSlices(10);
-    CGOCManager::Instance().SetTemplate( vaPlane );
+    vaPlane->SetStacks(20);
+    vaPlane->SetSlices(30);
+    CGOCManager::Get().SetTemplate( vaPlane );
 
     GOCTBoundingDWBox *tplBbox = new GOCTBoundingDWBox("ClothBoundingDef");
     //tplBbox->SetHalfSize( Vec3f( 0.25f, 0.5f, 0.2f ) );
     tplBbox->SetElasticity(0.0f);
     tplBbox->SetFriction(1.0f);
-    CGOCManager::Instance().SetTemplate( tplBbox );
+    CGOCManager::Get().SetTemplate( tplBbox );
 
     GOCTPhysicsCloth *tplDfmr = new GOCTPhysicsCloth("ClothDeformable");
     tplDfmr->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    tplDfmr->SetStacks(10);
-    tplDfmr->SetSlices(10);
+    tplDfmr->SetStacks(20);
+    tplDfmr->SetSlices(30);
     tplDfmr->SetMass(1.0f);
-    CGOCManager::Instance().SetTemplate( tplDfmr );
+    CGOCManager::Get().SetTemplate( tplDfmr );
 }
 
 // ----------------------------------------------------------------------------

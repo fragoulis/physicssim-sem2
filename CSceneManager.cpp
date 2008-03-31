@@ -4,6 +4,7 @@
 #include "CShaderManager.h"
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
+#include "CVertexArrayManager.h"
 #include "GOCS/CGameObject.h"
 #include <algorithm>
 using namespace tlib;
@@ -15,14 +16,16 @@ CSceneManager::~CSceneManager()
     MGRShader::Destroy();
     MGRTexture::Destroy();
     MGRMaterial::Destroy();
+    MGRVertexArray::Destroy();
 }
 
 // ------------------------------------------------------------------------
 void CSceneManager::Init()
 {
-    MGRShader::_Instance().Init();
-    MGRTexture::_Instance();
-    MGRMaterial::_Instance();
+    MGRShader::_Get().Init();
+    MGRTexture::_Get();
+    MGRMaterial::_Get();
+    MGRVertexArray::_Get().Init();
 }
 
 // ------------------------------------------------------------------------
@@ -41,17 +44,25 @@ void CSceneManager::Render() const
     // - single texture
 
     // Enable shader
-    MGRShader::Instance().begin(MGRShader::LIGHT_W_TEXTURE);
+    MGRShader::Get().begin(MGRShader::LIGHT_W_TEXTURE);
 
     // Apply texture
     glEnable(GL_TEXTURE_2D);
-    
+    GLuint uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+    glBindTexture( GL_TEXTURE_2D, uiTextureId );
+    glUniform1i( MGRShader::Get().getUniform("colormap"), 0 );
 
     // Apply material
-    //MGRMaterial::Instance().Apply(MGRMaterial::METAL);
-
+    MGRMaterial::Get().Apply(MGRMaterial::METAL);
+            
     // Render cube walls
     // ------------------------------------------------------------------------
+    //MGRVertexArray::Get().Begin("Walls");
+    //for( all walls ) do
+    ///* set position and orientation */
+    //MGRVertexArray::Get().Render();
+    //end for
+    //MGRVertexArray::End();
     
     // Render all balls
     // ------------------------------------------------------------------------
@@ -59,30 +70,6 @@ void CSceneManager::Render() const
     for(; i != m_vVisuals.end(); ++i )
     {   
         IGOCVisual *v = *i;
-
-        // Just for demostration .... :P
-        GLuint uiTextureId;
-        if( v->GetOwner()->Is("MyBigSphere") ) 
-        {
-            uiTextureId = MGRTexture::Instance().GetTexture("images/metal01-large.jpg");
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
-            MGRMaterial::Instance().Apply(MGRMaterial::SHINY);
-        }
-        else if( v->GetOwner()->Is("MyCloth") ) {
-            uiTextureId = MGRTexture::Instance().GetTexture("images/cloth.jpg");
-            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            MGRMaterial::Instance().Apply(MGRMaterial::SHINY);   
-        }
-        else
-        {
-            uiTextureId = MGRTexture::Instance().GetTexture("images/fiberglass.jpg");
-            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            MGRMaterial::Instance().Apply(MGRMaterial::METAL);
-        }
-        
         v->Render();
     }
 
@@ -95,5 +82,5 @@ void CSceneManager::Render() const
     // Disable texturing
     glDisable(GL_TEXTURE_2D);
 
-    MGRShader::Instance().end();
+    MGRShader::Get().end();
 }

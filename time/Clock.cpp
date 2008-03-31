@@ -65,7 +65,7 @@ void Clock::Start( MGRTimeSrc::TimeSourceType iType )
     // If clock is already running, delete the old time source and 
     // restart operation using the new one
     if( m_TimeSrc ) delete m_TimeSrc;
-    m_TimeSrc = MGRTimeSrc::_Instance().Get(iType);
+    m_TimeSrc = MGRTimeSrc::_Get().Get(iType);
 
     // Save current time
     m_lStart = m_TimeSrc->get();
