@@ -134,7 +134,7 @@ bool CollisionDetector::CheckSphereParticle( IGOCBoundingVolume *a,
     GOCBoundingSphere *sphere = static_cast<GOCBoundingSphere*>(a);
 
     // Sphere data
-    const float fRadiiSum   = sphere->GetRadius() + 0.01f; /* make the sphere a little bigger */
+    const float fRadiiSum   = sphere->GetRadius() + 0.02f; /* make the sphere a little bigger */
     const Vec3f &vSpherePos = sphere->GetOwner()->GetTransform().GetPosition();
 
     Vec3f vDistance = vSpherePos - b->GetPosition();

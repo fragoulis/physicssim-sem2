@@ -4,6 +4,7 @@
 #include "CShaderManager.h"
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
+#include "GOCS/CGameObject.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
@@ -43,13 +44,11 @@ void CSceneManager::Render() const
     MGRShader::Instance().begin(MGRShader::LIGHT_W_TEXTURE);
 
     // Apply texture
-    GLuint uiTextureId = MGRTexture::Instance().GetTexture("images/metal01-large.jpg");
     glEnable(GL_TEXTURE_2D);
-    glBindTexture( GL_TEXTURE_2D, uiTextureId );
-    glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
+    
 
     // Apply material
-    MGRMaterial::Instance().Apply(MGRMaterial::METAL);
+    //MGRMaterial::Instance().Apply(MGRMaterial::METAL);
 
     // Render cube walls
     // ------------------------------------------------------------------------
@@ -58,7 +57,34 @@ void CSceneManager::Render() const
     // ------------------------------------------------------------------------
     VisualArray_t::const_iterator i = m_vVisuals.begin();
     for(; i != m_vVisuals.end(); ++i )
-        (*i)->Render();
+    {   
+        IGOCVisual *v = *i;
+
+        // Just for demostration .... :P
+        GLuint uiTextureId;
+        if( v->GetOwner()->Is("MyBigSphere") ) 
+        {
+            uiTextureId = MGRTexture::Instance().GetTexture("images/metal01-large.jpg");
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
+            MGRMaterial::Instance().Apply(MGRMaterial::SHINY);
+        }
+        else if( v->GetOwner()->Is("MyCloth") ) {
+            uiTextureId = MGRTexture::Instance().GetTexture("images/cloth.jpg");
+            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            MGRMaterial::Instance().Apply(MGRMaterial::SHINY);   
+        }
+        else
+        {
+            uiTextureId = MGRTexture::Instance().GetTexture("images/fiberglass.jpg");
+            glUniform1i( MGRShader::Instance().getUniform("colormap"), 0 );
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            MGRMaterial::Instance().Apply(MGRMaterial::METAL);
+        }
+        
+        v->Render();
+    }
 
     // Render all jelly objects
     // ------------------------------------------------------------------------

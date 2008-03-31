@@ -1,7 +1,7 @@
 #pragma once
 #include "ITimeSource.h"
-#include <fstream>
-using std::ifstream;
+#include <sstream>
+using namespace std;
 
 namespace tlib
 {
@@ -12,10 +12,10 @@ class CFileTimeSource : public ITimeSource
 {
 private:
     // The input stream
-    ifstream m_fsIn;
+    istringstream m_times;
 
 public:
-    void open( const char *sFile );
+    CFileTimeSource();
     feed_t get();
 };
 

@@ -5,18 +5,26 @@
 
 // The world object class
 #include "GOCS/CGameObject.h"
+#include "Thread/CPhysicsThread.h"
 
 namespace tlib {
     namespace gocs {
         class CGameObject;
     }
 }
-using tlib::gocs::CGameObject;
+
+using namespace tlib;
+using namespace tlib::gocs;
 
 class MainApp : public gxbase::App 
 {
 public:
 	MainWindow w;
+
+    // Application's threads
+    CPhysicsThread m_tPhysics;
+    //CBitmapThread m_tBitmap;
+
     static const int MAX_PLANES = 6;
 
 private:
@@ -41,6 +49,7 @@ public:
     void AddBigSphere();
     void AddSmallSphere();
     void RemoveLastSphere();
+    void Reset();
 
 private:
     void InitTemplates();

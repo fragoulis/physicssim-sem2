@@ -19,9 +19,6 @@
 // The world object class
 #include "GOCS/CGameObject.h"
 
-using namespace tlib::gocs;
-using namespace tlib;
-
 static MainApp g_MainApp;
 
 // ----------------------------------------------------------------------------
@@ -34,6 +31,8 @@ void MainApp::OnCreate()
     InitTemplates();
     InitPlanes();
     InitCloth();
+
+    m_tPhysics.Start();
 }
 
 // ----------------------------------------------------------------------------
@@ -96,6 +95,21 @@ void MainApp::AddSmallSphere()
 }
 
 // ----------------------------------------------------------------------------
+void MainApp::Reset()
+{
+    // Remove all spheres
+    while( m_Spheres.size() )
+    {
+        CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
+        delete el;
+        el = 0;
+        m_Spheres.pop_back();
+    }
+
+    // Hide deformable !
+}
+
+// ----------------------------------------------------------------------------
 void MainApp::InitTemplates()
 {
     // CUSTOM SPHERE TEMPLATE
@@ -151,8 +165,8 @@ void MainApp::InitTemplates()
     // CLOTH TEMPLATES
     GOCTVisualVAPlane *vaPlane = new GOCTVisualVAPlane("ClothVisualPlane");
     vaPlane->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    vaPlane->SetStacks(20);
-    vaPlane->SetSlices(30);
+    vaPlane->SetStacks(10);
+    vaPlane->SetSlices(10);
     CGOCManager::Instance().SetTemplate( vaPlane );
 
     GOCTBoundingDWBox *tplBbox = new GOCTBoundingDWBox("ClothBoundingDef");
@@ -163,9 +177,9 @@ void MainApp::InitTemplates()
 
     GOCTPhysicsCloth *tplDfmr = new GOCTPhysicsCloth("ClothDeformable");
     tplDfmr->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    tplDfmr->SetStacks(20);
-    tplDfmr->SetSlices(30);
-    tplDfmr->SetMass(5.0f);
+    tplDfmr->SetStacks(10);
+    tplDfmr->SetSlices(10);
+    tplDfmr->SetMass(1.0f);
     CGOCManager::Instance().SetTemplate( tplDfmr );
 }
 

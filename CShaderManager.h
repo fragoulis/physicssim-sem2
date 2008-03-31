@@ -15,7 +15,7 @@ public:
     //! An enumeration of the shader programs we will use
     enum ShaderProgram {
         LIGHT_W_TEXTURE,
-        LIGHT_WOUT_TEXTURE,
+        LIGHT_W_TEXTURE_REFRACT,
         NUM_OF_SHADERS
     };
 

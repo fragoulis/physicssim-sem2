@@ -79,8 +79,8 @@ void CCollisionData::ResolveVelocity( float delta )
         vImpulsePerIMass * m_Bodies[0]->GetInverseMass()
     );
 
-    Vec3f velocity = m_Bodies[0]->GetVelocity() * ( 1.0f - m_vContactNormal );
-    m_Bodies[0]->AddForce( m_fFriction * ~velocity );
+    //Vec3f velocity = m_Bodies[0]->GetVelocity() * ( 1.0f - m_vContactNormal );
+    //m_Bodies[0]->AddForce( m_fFriction * ~velocity );
 
     if( m_Bodies[1] )
     {
@@ -90,8 +90,8 @@ void CCollisionData::ResolveVelocity( float delta )
             vImpulsePerIMass * -m_Bodies[1]->GetInverseMass()
         );
 
-        velocity = m_Bodies[1]->GetVelocity() * ( 1.0f - m_vContactNormal );
-        m_Bodies[1]->AddForce( m_fFriction * ~velocity );
+        //velocity = m_Bodies[1]->GetVelocity() * ( 1.0f - m_vContactNormal );
+        //m_Bodies[1]->AddForce( m_fFriction * ~velocity );
     }
 } // end of ResolveVelocity()
 
@@ -115,19 +115,14 @@ void CCollisionData::ResolveInterpenetration( float delta )
     const Vec3f vMovePerIMass = m_vContactNormal * fPenetration;
     
     // Apply the m_fPenetration resolution.
-    //Vec3f pos1 = m_Bodies[0]->GetPosition();
     m_Bodies[0]->SetPosition(
         m_Bodies[0]->GetPosition() +
         vMovePerIMass * m_Bodies[0]->GetInverseMass());
     
     if( m_Bodies[1] )
     {
-        //std::cout << "0 POS -> " << pos1 << std::endl;
-        //std::cout << "1 POS -> " << m_Bodies[1]->GetPosition() << std::endl;
         m_Bodies[1]->SetPosition(
             m_Bodies[1]->GetPosition() -
             vMovePerIMass * m_Bodies[1]->GetInverseMass());
-        //std::cout << "0 -> " << (vMovePerIMass * m_Bodies[0]->GetInverseMass()) << std::endl;
-        //std::cout << "1 -> " << (vMovePerIMass * m_Bodies[1]->GetInverseMass()*2.0f) << std::endl;
     }
 } // end of ResolveInterpenetration()

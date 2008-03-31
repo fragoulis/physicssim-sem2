@@ -73,7 +73,7 @@ public:
     void FromVector( float w, const TVec &xyz );
 
     //! Calculates the rotation from three angles
-    void FromEuler( const float fPitch, const float fYaw, const float fRoll );
+    void FromEuler( float fPitch, float fYaw, float fRoll );
 
     //! Calculates the rotation from its own values
     void FromSelf();
@@ -88,6 +88,8 @@ public:
     void Slerp( const TQuat &qFinal, float t, TQuat &qResult ) const;
 
     //! Multiplies two quaternions and returns the result
+    inline TQuat& operator*=( Type rh );
+
     inline TQuat operator*( const TQuat &rh ) const;
 
     //! Returns the conjugate of this quaternion
@@ -97,7 +99,10 @@ public:
 
     //! Writes quaternion data to a stream
     void write( std::ostream &cout ) const {
-        cout << "(" << w() << "," << x() << "," << y() << "," << z() << ")";
+        cout << "(" << w() << "," 
+                    << x() << "," 
+                    << y() << "," 
+                    << z() << ")";
     }
 
 }; // end TQuaternion
@@ -131,8 +136,8 @@ void TQuaternion<Type>::FromVector( float w, const TVec &xyz )
 
 //! Calculates the rotation from three angles
 template<class Type>
-void TQuaternion<Type>::FromEuler( const float fPitch, const float fYaw,
-                                   const float fRoll )
+void TQuaternion<Type>::FromEuler( float fPitch, float fYaw,
+                                   float fRoll )
 {
     float
         cr = cos( fRoll * 0.5f ),
@@ -259,7 +264,16 @@ void TQuaternion<Type>::Slerp( const TQuat &qFinal, float t, TQuat &qResult ) co
 }
 
 //--- Operators ---------------------------------------------------------------
-//! Multiplication operator
+template<class Type>
+TQuaternion<Type>& TQuaternion<Type>::operator*=( Type rh )
+{
+    m_wxyz[0] += rh;
+    m_wxyz[1] += rh;
+    m_wxyz[2] += rh;
+    m_wxyz[3] += rh;
+    return *this;
+}
+
 template<class Type>
 TQuaternion<Type> TQuaternion<Type>::operator*( const TQuat &rh ) const 
 {
