@@ -1,12 +1,14 @@
 #include "CSpringDamper.h"
 #include "CParticle.h"
+#include "../Util/Config.h"
 using namespace tlib::physics;
 
 CSpringDamper::CSpringDamper()
 {
-    // TODO: Read values from config
-    m_k = 200.0f;
-    m_d = 1.0f;
+    CFG_SERVER_OPEN;
+    CFG_LOAD("Spring_Attributes");
+    CFG_1f("spring", m_Ks);
+    CFG_1f("damper", m_Kd);
 }
 
 void CSpringDamper::Compute()
@@ -17,14 +19,14 @@ void CSpringDamper::Compute()
     const Vec3f vNormal = vDist / fLength;
 
     // Spring force
-    float fSpring = m_k * ( fLength - m_fRestLength );
+    float fSpring = m_Ks * ( fLength - m_fRestLength );
 
     //// Current velocities
     //float fVel1 = vNormal.Dot( m_Particles[0]->GetVelocity() );
     //float fVel2 = vNormal.Dot( m_Particles[1]->GetVelocity() );
 
     //// Damping force
-    //float fDamper = m_d * ( fVel1 - fVel2 );
+    //float fDamper = m_Kd * ( fVel1 - fVel2 );
 
     //// Total spring-damper force
     //Vec3f vTotal = ( fSpring - fDamper ) * vNormal;

@@ -4,6 +4,7 @@
 //#include "GOCS/Interfaces/IGOCBoundingVolume.h"
 #include "GOCS/GOCBoundingDeformable.h"
 #include "Util/CLogger.h"
+#include "Util/Config.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::GOCBoundingDeformable;
@@ -18,9 +19,10 @@ using tlib::gocs::GOCBoundingDeformable;
 // ----------------------------------------------------------------------------
 CPhysicsManager::CPhysicsManager()
 {
-    // TODO: Read values from config file
-    m_fGravity  = -7.81f; // this MUST be in the constructor
-    m_fTimeStep = 0.001f; // 1000Hz
+    CFG_SERVER_OPEN;
+    CFG_LOAD("Physics_Attributes");
+    CFG_1f("gravity", m_fGravity);
+    CFG_1f("timestep", m_fTimeStep);
 }
 
 void CPhysicsManager::Init()

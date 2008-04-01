@@ -21,10 +21,10 @@ private:
     CParticle *m_Particles[2];
 
     //! Spring coefficient
-    float m_k;
+    float m_Ks;
 
     //! Damping factor
-    float m_d;
+    float m_Kd;
 
     //! Spring's rest length
     float m_fRestLength;
@@ -33,8 +33,8 @@ public:
     CSpringDamper();
     
     // Accessors
-    float GetK() const { return m_k; }
-    float GetD() const { return m_d; }
+    float GetK() const { return m_Ks; }
+    float GetD() const { return m_Kd; }
     float GetRestLength() const { return m_fRestLength; }
 
     // Mutators
@@ -43,8 +43,8 @@ public:
         m_Particles[0] = p1; m_Particles[1] = p2; 
     }
 
-    void SetK( float k ) { m_k = k; }
-    void SetD( float d ) { m_d = d; }
+    void SetK( float k ) { m_Ks = k; }
+    void SetD( float d ) { m_Kd = d; }
     void SetRestLength( float l ) { m_fRestLength = l; }
     
     //! Computes the forces acting on the particles
