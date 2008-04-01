@@ -18,6 +18,7 @@ using tlib::gocs::GOCBoundingDeformable;
 // ----------------------------------------------------------------------------
 CPhysicsManager::CPhysicsManager()
 {
+    // TODO: Read values from config file
     m_fGravity  = -7.81f; // this MUST be in the constructor
     m_fTimeStep = 0.001f; // 1000Hz
 }
