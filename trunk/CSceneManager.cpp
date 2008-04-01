@@ -47,7 +47,6 @@ void CSceneManager::Render() const
     MGRShader::Get().begin(MGRShader::LIGHT_W_TEXTURE);
 
     // Apply texture
-    glEnable(GL_TEXTURE_2D);
     GLuint uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
     glBindTexture( GL_TEXTURE_2D, uiTextureId );
     glUniform1i( MGRShader::Get().getUniform("colormap"), 0 );
@@ -78,9 +77,7 @@ void CSceneManager::Render() const
 
     // Render cloth
     // ------------------------------------------------------------------------
-
-    // Disable texturing
-    glDisable(GL_TEXTURE_2D);
+    
 
     MGRShader::Get().end();
 }

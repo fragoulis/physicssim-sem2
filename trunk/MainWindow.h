@@ -37,7 +37,8 @@ private:
     Quatf m_qRotationAccum;
 
     // General controls
-    bool m_bPause, m_bWireframe, m_bShowControls;
+    bool m_bPause, m_bWireframe, m_bTextured,
+         m_bShowControls;
     
     // Application states
     enum { AS_NORMAL = 0, AS_RECORD, AS_REPLAY };
