@@ -38,7 +38,8 @@ m_iMouseY(0),
 m_bPause(0),
 m_AppState(AS_NORMAL),
 m_bWireframe(0),
-m_bShowControls(0)
+m_bShowControls(0),
+m_bTextured(1)
 {
     // TODO: Read window stuff from config
 
@@ -160,11 +161,23 @@ void MainWindow::OnKeyboard( int key, bool down )
     case 's': m_bShowControls = !m_bShowControls; break;
     case 'w': 
         {
-            m_bWireframe = !m_bWireframe;
-            if( m_bWireframe )
+            if( m_bTextured && !m_bWireframe )
+            {
+                m_bTextured = false;
+                glDisable( GL_TEXTURE_2D );
+            }
+            else if( !m_bTextured && !m_bWireframe )
+            {
+                m_bWireframe = true;
                 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+            }
             else
+            {
+                m_bTextured = true;
+                m_bWireframe = false;
+                glEnable( GL_TEXTURE_2D );
                 glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+            }
         }
         break;
 
@@ -464,11 +477,17 @@ void MainWindow::PrintStats()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // TODO: Change projection to ortho
-    glRasterPos2f( -1.0f, 0.95f );
-    Printf( "Number of Balls: %i", MainApp::Get().GetBallCount() );
+    float deltaY = 0.05f, startY = 1.0f;
+    #define TEXT_Y startY-=deltaY
+
+    int smallspheres, bigspheres;
+    MainApp::Get().GetNumOfSpheres( smallspheres, bigspheres );
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "Big spheres: %i", bigspheres );
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "Small Spheres: %i", smallspheres );
     
-    glRasterPos2f( -1.0f, 0.9f );
+    glRasterPos2f( -1.0f, TEXT_Y );
     string gamestate("Normal");
     switch(m_AppState)
     {
@@ -479,30 +498,30 @@ void MainWindow::PrintStats()
 
     if( m_bShowControls )
     {
-        glRasterPos2f( -1.0f, 0.85f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "Hold left mouse button and drag to rotate the cube" );
-        glRasterPos2f( -1.0f, 0.80f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'1' to add sphere" );
-        glRasterPos2f( -1.0f, 0.75f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'2' to remove the last ball added" );
-        glRasterPos2f( -1.0f, 0.70f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'P' to pause" );
-        glRasterPos2f( -1.0f, 0.65f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'R' to toggle record mode" );
-        glRasterPos2f( -1.0f, 0.60f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'O' to replay the last recorded try" );
-        glRasterPos2f( -1.0f, 0.55f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'W' toggle wireframe" );
-        glRasterPos2f( -1.0f, 0.50f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'F' toggle fullscreen" );
-        glRasterPos2f( -1.0f, 0.45f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'Q' to quit" );
-        glRasterPos2f( -1.0f, 0.40f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'S' to close help" );
     }
     else
     {
-        glRasterPos2f( -1.0f, 0.85f );
+        glRasterPos2f( -1.0f, TEXT_Y );
         Printf( "'S' to show help" );
     }
 
