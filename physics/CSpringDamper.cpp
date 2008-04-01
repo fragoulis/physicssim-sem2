@@ -4,6 +4,7 @@ using namespace tlib::physics;
 
 CSpringDamper::CSpringDamper()
 {
+    // TODO: Read values from config
     m_k = 200.0f;
     m_d = 1.0f;
 }

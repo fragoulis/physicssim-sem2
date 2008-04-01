@@ -30,6 +30,9 @@ MainApp& MainApp::Get() { return g_MainApp; }
 // ----------------------------------------------------------------------------
 void MainApp::OnCreate()
 {
+    m_iNumOfSmallSpheres = 0;
+    m_iNumOfBigSpheres = 0;
+
     CGOCManager::_Get();
     InitTemplates();
     InitPlanes();
@@ -65,6 +68,12 @@ void MainApp::RemoveLastSphere()
     {
         // Get last element
         CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
+        
+        if( el->Is("MyBigSphere") ) {
+            m_iNumOfBigSpheres--;
+        } else {
+            m_iNumOfSmallSpheres--;
+        }
 
         delete el;
         el = 0;
@@ -82,6 +91,7 @@ void MainApp::AddBigSphere()
     ADD_GOC( pSphere, "BoundingBigSphere" );
 
     m_Spheres.push_back(pSphere);
+    m_iNumOfBigSpheres++;
 }
 
 // ----------------------------------------------------------------------------
@@ -93,6 +103,7 @@ void MainApp::AddSmallSphere()
     ADD_GOC( pSphere, "BoundingSmallSphere" );
 
     m_Spheres.push_back(pSphere);
+    m_iNumOfSmallSpheres++;
 }
 
 // ----------------------------------------------------------------------------
@@ -106,6 +117,8 @@ void MainApp::Reset()
         el = 0;
         m_Spheres.pop_back();
     }
+    m_iNumOfBigSpheres = 0;
+    m_iNumOfSmallSpheres = 0;
 
     // Hide deformable !
 }
@@ -113,6 +126,8 @@ void MainApp::Reset()
 // ----------------------------------------------------------------------------
 void MainApp::InitTemplates()
 {
+    // TODO: Read all values from config file
+
     // CUSTOM SPHERE TEMPLATE
     GOCTVisualVASphere *tplBig = new GOCTVisualVASphere("VisualBigSphere");
     tplBig->SetRadius(0.05f);
@@ -166,8 +181,8 @@ void MainApp::InitTemplates()
     // CLOTH TEMPLATES
     GOCTVisualVAPlane *vaPlane = new GOCTVisualVAPlane("ClothVisualPlane");
     vaPlane->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    vaPlane->SetStacks(20);
-    vaPlane->SetSlices(30);
+    vaPlane->SetStacks(10);
+    vaPlane->SetSlices(10);
     CGOCManager::Get().SetTemplate( vaPlane );
 
     GOCTBoundingDWBox *tplBbox = new GOCTBoundingDWBox("ClothBoundingDef");
@@ -178,8 +193,8 @@ void MainApp::InitTemplates()
 
     GOCTPhysicsCloth *tplDfmr = new GOCTPhysicsCloth("ClothDeformable");
     tplDfmr->SetHalfSize( Vec2f( 0.25f, 0.5f ) );
-    tplDfmr->SetStacks(20);
-    tplDfmr->SetSlices(30);
+    tplDfmr->SetStacks(10);
+    tplDfmr->SetSlices(10);
     tplDfmr->SetMass(1.0f);
     CGOCManager::Get().SetTemplate( tplDfmr );
 }
@@ -187,6 +202,8 @@ void MainApp::InitTemplates()
 // ----------------------------------------------------------------------------
 void MainApp::InitPlanes()
 {
+    // TODO: Read all values from config file
+
     const float POSITION = 0.5f;
 
     // Back plane
@@ -240,6 +257,8 @@ void MainApp::InitPlanes()
 // ----------------------------------------------------------------------------
 void MainApp::InitCloth()
 {
+    // TODO: Read all values from config file
+
     m_Cloth = new CGameObject("MyCloth");
     m_Cloth->GetTransform().GetPosition().Set( -0.25f, 0.0f, 0.0f );
     //m_Cloth->GetTransform().GetPosition().Set( 0.0f, 0.4f, 0.0f );
