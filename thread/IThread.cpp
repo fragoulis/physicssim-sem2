@@ -5,7 +5,7 @@ namespace tlib
 {
 
 // ----------------------------------------------------------------------------
-IThread::IThread()
+IThread::IThread(): m_bIsRunning(false)
 {
     m_lpThreadFunc = IThread::ThreadFunc;
 }

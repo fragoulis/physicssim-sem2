@@ -1,36 +1,54 @@
 #pragma once
+#include <windows.h>
 
 namespace tlib 
 {
 
 /**
  * @class IThread
- * Portable thread class interface.
- * This interface is used for deriving platform specific thread classes.
+ * Windows thread wrapper class.
  */
 class IThread
 {
 private:
+    typedef unsigned int (__stdcall *THREADFUNC)(void*);
+
     //! Flag for whether the thread is running
     bool m_bIsRunning;
 
+    //! The thread's os handle
+    HANDLE      m_Handle;
+    
+    //! The thread's parameters
+    LPVOID      m_lpArgs;
+
+    //! Pointer to the main thread function
+    THREADFUNC  m_lpThreadFunc;
+
 public:
     //! Constructor
-    IThread():m_bIsRunning(false) {}
+    IThread();
 
     //! Virtual destructor
     virtual ~IThread() {}
 
-    //! Override this to create and start the thread
-    virtual void Start( void *lpArgs = 0 ) = 0;
-
-    //! Override this to terminate the thread
-    virtual void Terminate() = 0;
+    void Start( void *lpArgs = 0 );
+    void Terminate();
 
     //! Returns whether the thread is running
     bool IsRunning() const { return m_bIsRunning; }
 
 protected:
+    static unsigned int __stdcall ThreadFunc( void *lpArgs )
+    {
+        IThread *pParent = reinterpret_cast<IThread*>(lpArgs);
+        pParent->OnStart();
+        pParent->Run( pParent->m_lpArgs );
+        pParent->OnEnd();
+
+        return STILL_ACTIVE;
+    }
+
     //! Sets the running flag
     void Resume() { m_bIsRunning = true; }
 
