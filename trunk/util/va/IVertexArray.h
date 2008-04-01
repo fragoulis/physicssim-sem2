@@ -1,7 +1,8 @@
 #pragma once
 #include <string>
-#include "../../Math/TVector2.h"
-#include "../../Math/TVector3.h"
+#include <cassert>
+#include "../../Math/Math.h"
+#include "../../Math/TTriangle.h"
 using namespace tlib::math;
 
 namespace tlib
@@ -38,7 +39,7 @@ protected:
     unsigned int *m_Indices;
     
     bool m_bIsTextured;
-    int m_iNumOfVertices, m_iNumOfIndices;
+    int m_iNumOfVertices, m_iNumOfIndices, m_iNumberOfTriangles;
     int m_iStacks, m_iSlices;
 
 public:
@@ -59,10 +60,12 @@ public:
     void SetStacks( int s ) { m_iStacks = s; }
     void SetSlices( int s ) { m_iSlices = s; }
 
-    void GetVertex( int index, Vec3f &v ) { v.Set( m_Vertices[index] ); }
-    void GetNormal( int index, Vec3f &v ) { v.Set( m_Normals[index] ); }
-    void GetVertex( int stack, int slice, Vec3f &v ) { GetVertex( stack+slice*m_iStacks, v ); }
-    void GetNormal( int stack, int slice, Vec3f &v ) { GetNormal( stack+slice*m_iStacks, v ); }
+    void GetVertex( int index, Vec3f &v ) const { v.Set( m_Vertices[index] ); }
+    void GetNormal( int index, Vec3f &v ) const { v.Set( m_Normals[index] ); }
+    void GetVertex( int stack, int slice, Vec3f &v ) const { GetVertex( stack+slice*m_iStacks, v ); }
+    void GetNormal( int stack, int slice, Vec3f &v ) const { GetNormal( stack+slice*m_iStacks, v ); }
+
+    // TODO: Add GetTriangle()
 
     // Mutators
     void SetVertex( int index, const Vec3f &v ) 
