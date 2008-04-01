@@ -14,6 +14,7 @@
 #include "GOCS/GOCPhysicsCloth.h"
 
 #include "Util/CLogger.h"
+#include "Util/Config.h"
 
 using namespace tlib;
 using namespace tlib::math;
@@ -42,15 +43,21 @@ m_bShowControls(0),
 m_bTextured(1)
 {
     // TODO: Read window stuff from config
-
-    // Initialize window
-    SetSize( 768, 768 );
     
-    //SetFullscreen(true);
-    m_fFovY      = 80.0f;
+    CFG_CLIENT_OPEN;
+    CFG_LOAD("Window_Attributes");
+    CFG_1f("fov", m_fFovY);
+    CFG_2fv("planes", m_fPlanes);
+
+    int w, h;
+    CFG_2i("size", w, h);
+    SetSize( w, h );
+    
+    bool fullscreen;
+    CFG_1b("fullscreen", fullscreen);
+    SetFullscreen(fullscreen);
+
     m_fDimRatio  = float(Width()) / float(Height());
-    m_fPlanes[0] = 0.1f;
-    m_fPlanes[1] = 1000.0f;
 }
 
 //-----------------------------------------------------------------------------
