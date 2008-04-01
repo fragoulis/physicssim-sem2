@@ -28,10 +28,11 @@ bool CVAPlane::Create( bool bTextured )
     const int stacks = m_iStacks;
     const int slices = m_iSlices;
 
-    if( (stacks<1) && (slices<1) ) return false;
+    if( (stacks<2) || (slices<2) ) return false;
 
-    m_iNumOfVertices = slices*stacks;
-    m_iNumOfIndices = (stacks-1)*(slices-1)*6;
+    m_iNumOfVertices     = slices*stacks;
+    m_iNumberOfTriangles = (stacks-1)*(slices-1)*2;
+    m_iNumOfIndices      = m_iNumberOfTriangles*3;
 
     m_Vertices  = new float[m_iNumOfVertices][3];
     m_Normals   = new float[m_iNumOfVertices][3];
