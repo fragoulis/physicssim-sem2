@@ -1,10 +1,24 @@
 #include "CPhysicsThread.h"
-using namespace tlib;
+#include "../MainApp.h"
+//#include "../CPhysicsManager.h"
+#include "../Time/Clock.h"
+#include "../Util/CLogger.h"
 
-#include <iostream>
-using namespace std;
+using namespace tlib;
+using namespace tlib::math;
+using namespace tlib::time;
 
 void CPhysicsThread::Run( void *lpArgs )
 {
-    cout << "Came and gone..." << endl;
+    int i = 0;
+    while(IsRunning())
+    {
+        Clock::Get().FrameStep();
+        float delta = (float)Clock::Get().GetTimeDelta();
+
+        if( !MainApp::Get().IsPaused() )
+        {
+            
+        }
+    }
 }

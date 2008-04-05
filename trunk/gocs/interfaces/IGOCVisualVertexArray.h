@@ -26,6 +26,7 @@ protected:
     unsigned int *m_IndexArray;
 
 public:
+    IGOCVisualVertexArray();
     virtual ~IGOCVisualVertexArray();
 
     virtual ComponentId_t GetID() const {

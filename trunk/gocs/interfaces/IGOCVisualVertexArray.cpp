@@ -6,6 +6,13 @@
 #include "IGOCVisualVertexArray.h"
 using namespace tlib::gocs;
 
+IGOCVisualVertexArray::IGOCVisualVertexArray():
+m_VertexArray(0),
+m_NormalArray(0),
+m_TexArray(0),
+m_IndexArray(0)
+{}
+
 IGOCVisualVertexArray::~IGOCVisualVertexArray()
 {
     delete[] m_VertexArray;

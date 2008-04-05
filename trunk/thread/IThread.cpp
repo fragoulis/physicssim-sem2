@@ -1,5 +1,6 @@
 #include "IThread.h"
 #include <process.h>
+#include "../Util/CLogger.h"
 
 namespace tlib
 {
@@ -25,20 +26,54 @@ void IThread::Start( void *lpArgs )
 		&threadId	    // OUT: returns thread ID
 	);
 
-    Resume();
+    if( NULL == m_Handle )
+    {
+        _LOG("CreateThread error");
+        return;
+    }
+
+    m_bIsRunning = true;
 }
 
 // ----------------------------------------------------------------------------
 void IThread::Terminate()
 {
-    Pause();
+    m_bIsRunning = false;
 
     // Wait for it to stop
-	WaitForSingleObject( m_Handle, INFINITE );
-    
-	// Close thread handle
+	WaitForSingleObject( m_Handle, 5000 );
+
+    _LOG("Thread terminated!");
+	
+    // Close thread handle
 	CloseHandle( m_Handle );
 	m_Handle = 0;
+}
+
+void IThread::Resume()
+{ 
+    m_bIsRunning = true;
+    ResumeThread(m_Handle);
+}
+
+void IThread::Suspend() 
+{ 
+    SuspendThread(m_Handle);
+    m_bIsRunning = false;
+}
+
+void IThread::Toggle()
+{ 
+    if( m_bIsRunning ) Suspend();
+    else Resume();
+}
+
+void IThread::OnStart() { 
+    _LOG("Thread started!"); 
+}
+
+void IThread::OnEnd() { 
+    _LOG("Thread ended!");  
 }
 
 } // end namespace tlib

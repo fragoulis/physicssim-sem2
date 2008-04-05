@@ -30,6 +30,7 @@ void CPhysicsManager::Init()
     m_CollisionStack.Init(600);   
 }
 
+
 // ----------------------------------------------------------------------------
 void CPhysicsManager::Update( float delta ) 
 {
@@ -117,16 +118,16 @@ void CPhysicsManager::CheckCollisions()
     } // end for( spheres ... )
 
     // Check planes with all particles of the cloth
-    for( i = m_CollidablePlanes.begin(); i != m_CollidablePlanes.end(); ++i )
-    {
-        GOCBoundingDeformable *cloth = static_cast<GOCBoundingDeformable*>(m_Cloth);
-        while( CParticle *p = cloth->GetParticle() )
-        {
-            data = m_CollisionStack.GetFreeSpot();
-            if( CollisionDetector::CheckPlaneParticle( *i, p, data ) )
-                m_CollisionStack.AddCollision( data );
-        }
-    } // end for( planes ... )
+    //for( i = m_CollidablePlanes.begin(); i != m_CollidablePlanes.end(); ++i )
+    //{
+    //    GOCBoundingDeformable *cloth = static_cast<GOCBoundingDeformable*>(m_Cloth);
+    //    while( CParticle *p = cloth->GetParticle() )
+    //    {
+    //        data = m_CollisionStack.GetFreeSpot();
+    //        if( CollisionDetector::CheckPlaneParticle( *i, p, data ) )
+    //            m_CollisionStack.AddCollision( data );
+    //    }
+    //} // end for( planes ... )
 
 } // CheckCollisions()
 

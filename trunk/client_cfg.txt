@@ -1,0 +1,42 @@
+.Window_Attributes
+fov 		80.0
+size 		768,768
+planes		0.1,10.0
+fullscreen 	0
+
+.VisualSphere
+BigRadius   0.05
+BigStacks   15
+BigSlices   15
+SmallRadius 0.02
+SmallStacks 10
+SmallSlices 10
+
+.PhysicsPoint
+BigMass     1.0
+SmallMass   0.25
+
+.BoundingSphere
+BigRadius       0.05
+BigElasticity   0.95
+BigFriction     0.1
+SmallRadius     0.02
+SmallElasticity 0.95
+SmallFriction   0.1
+
+.Plane
+Halfsize    0.5,0.5
+Normal      0.0,0.0,1.0
+Stacks      2
+Slices      2
+Elasticity  0.95
+Friction    0.1
+
+.Cloth
+Halfsize    0.25,0.5
+Normal      0.0,0.0,1.0
+Mass        1.0
+Stacks      10
+Slices      10
+Elasticity  0.0
+Friction    1.0

@@ -39,15 +39,15 @@ using namespace std;
     b = temp[1]; \
     c = temp[2]; \
 }
-#define CFG_GET_2v( type, key, v ) { \
-    CFG_VAR._get<type>( string(key), v, 2 ); \
+#define CFG_GET_3v( type, key, v ) { \
+    CFG_VAR._get<type>( string(key), v, 3 ); \
 }
 
 // ------------------------------------------------------
 #define CFG_2f( key, a, b ) CFG_GET_2( float, key, a, b )
 #define CFG_2fv( key, v ) CFG_GET_2v( float, key, v )
 
-#define CFG_3f( key, a, b, c ) CFG_GET_3( float, key, a, b )
+#define CFG_3f( key, a, b, c ) CFG_GET_3( float, key, a, b, c )
 #define CFG_3fv( key, v ) CFG_GET_3v( float, key, v )
 
 #define CFG_2i( key, a, b ) CFG_GET_2( int, key, a, b )
