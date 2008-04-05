@@ -27,18 +27,16 @@ private:
     CLight m_Lights[MAX_LIGHTS];
 
     // Rotating cube controls
-    int   m_iMouseX, m_iMouseY;
-    bool  m_bIsMouseDown;
-    float 
-        m_fCubeHorizontalAngle, 
-        m_fCubeVerticalAngle,
-        m_fAccumX, 
-        m_fAccumY;
+    int m_iMouseX, m_iMouseY;
+    bool m_bIsMouseDown;
+    float m_fCubeHorizontalAngle, m_fCubeVerticalAngle;
+    float m_fAccumX, m_fAccumY;
     Quatf m_qRotationAccum;
 
     // General controls
-    bool m_bPause, m_bWireframe, m_bTextured,
-         m_bShowControls;
+    bool m_bWireframe;
+    bool m_bTextured;
+    bool m_bShowControls;
     
     // Application states
     enum { AS_NORMAL = 0, AS_RECORD, AS_REPLAY };

@@ -1,8 +1,8 @@
 #include "CVertexArrayManager.h"
-//#include "Util/VA/IVertexArray.h"
 #include "Util/VA/CVASphere.h"
 #include "Util/VA/CVAPlane.h"
 #include "Util/std_help.h"
+#include "Util/Config.h"
 
 using namespace tlib;
 using namespace tlib::util;
@@ -18,27 +18,47 @@ CVertexArrayManager::~CVertexArrayManager()
 
 void CVertexArrayManager::Init()
 {
-    // TODO: Draw this data out of a file
+    float radius, size[2], normal[3];
+    int stacks, slices;
 
-    float radius = 0.05f;
-    int stacks = 5;
-    int slices = 5;
+    // TODO: Draw this data out of a file
+    CFG_CLIENT_OPEN;
+
+    // ------------------------------------------------------------------------
+    CFG_LOAD("Sphere");
+
+    CFG_1f("BigRadius", radius);
+    CFG_1i("BigStacks", stacks);
+    CFG_1i("BigSlices", slices);
     CVASphere *sphere = new CVASphere( "BigSphere", radius, stacks, slices );
     MAP_INSERT( m_Arrays, "BigSphere", sphere );
 
-    radius = 0.02f;
+    CFG_1f("SmallRadius", radius);
+    CFG_1i("SmallStacks", stacks);
+    CFG_1i("SmallSlices", slices);
     sphere = new CVASphere( "SmallSphere", radius, stacks, slices );
     MAP_INSERT( m_Arrays, "SmallSphere", sphere );
 
-    Vec2f hsize( 0.5f, 0.5f );
-    stacks = slices = 2;
-    CVAPlane *plane = new CVAPlane( "Wall", hsize, stacks, slices );
+    // ------------------------------------------------------------------------
+    CFG_LOAD("Plane");
+
+    CFG_2fv("Halfsize", size);
+    CFG_3fv("Normal", normal);
+    CFG_1i("Stacks", stacks);
+    CFG_1i("Slices", slices);
+    
+    CVAPlane *plane = new CVAPlane( "Wall", size, normal, stacks, slices );
     MAP_INSERT( m_Arrays, "Wall", plane );
 
-    hsize.Set( 0.25f, 0.5f );
-    stacks = 20;
-    slices = 30;
-    plane = new CVAPlane( "Cloth", hsize, stacks, slices );
+    // ------------------------------------------------------------------------
+    CFG_LOAD("Cloth");
+
+    CFG_2fv("Halfsize", size);
+    CFG_3fv("Normal", normal);
+    CFG_1i("Stacks", stacks);
+    CFG_1i("Slices", slices);
+
+    plane = new CVAPlane( "Cloth", size, normal, stacks, slices );
     MAP_INSERT( m_Arrays, "Cloth", plane );
 }
 

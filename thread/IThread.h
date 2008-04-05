@@ -37,6 +37,15 @@ public:
 
     //! Returns whether the thread is running
     bool IsRunning() const { return m_bIsRunning; }
+    
+    //! Resumes the thread
+    void Resume();
+
+    //! Suspends the thread
+    void Suspend();
+
+    //! Toggle the thread's state
+    void Toggle();
 
 protected:
     static unsigned int __stdcall ThreadFunc( void *lpArgs )
@@ -49,20 +58,14 @@ protected:
         return STILL_ACTIVE;
     }
 
-    //! Sets the running flag
-    void Resume() { m_bIsRunning = true; }
-
-    //! Unsets the running flag
-    void Pause() { m_bIsRunning = false; }
-
     //! Override this with the main thread function
     virtual void Run( void *lpArgs ) = 0;
 
     //! Override this to add any initializations before the thread starts.
-    virtual void OnStart() {};
+    virtual void OnStart();
 
     //! Override this to add any clean-up code after the thread exits.
-    virtual void OnEnd() {};
+    virtual void OnEnd();
 
 }; // end IThread
 

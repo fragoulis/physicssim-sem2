@@ -36,7 +36,6 @@ m_fAccumX(0.0f),
 m_fAccumY(0.0f),
 m_iMouseX(0),
 m_iMouseY(0),
-m_bPause(0),
 m_AppState(AS_NORMAL),
 m_bWireframe(0),
 m_bShowControls(0),
@@ -102,7 +101,7 @@ void MainWindow::OnDisplay()
 
     //RenderHelpGrid( 40, 0.5f );
     MGRScene::Get().Render();
-    PrintStats();
+    //PrintStats();
 
     CGameObject *cloth = MainApp::Get().GetCloth();
     GOCBoundingDWBox *bnd = GET_OBJ_GOC( cloth, GOCBoundingDWBox, "BoundingVolume" );
@@ -123,7 +122,7 @@ void MainWindow::OnIdle()
     }
     // =========================================================================
 
-    if( !m_bPause )
+    if( !MainApp::Get().IsPaused() )
     {
         RotateCube( delta );
         MGRPhysics::Get().Update( delta );
@@ -151,7 +150,7 @@ void MainWindow::HandleReplay()
     }
 
     CommonKeyboard( m_RecData.key );
-    ActMouseButton( (m_RecData.mouse==1)?true:false );
+    ActMouseButton( (m_RecData.mouse==1)?true:false ); // used macro to get rid of the warning
     ActMouseMove( m_RecData.x, m_RecData.y );
 }
 
@@ -168,23 +167,29 @@ void MainWindow::OnKeyboard( int key, bool down )
     case 's': m_bShowControls = !m_bShowControls; break;
     case 'w': 
         {
-            if( m_bTextured && !m_bWireframe )
-            {
-                m_bTextured = false;
-                glDisable( GL_TEXTURE_2D );
-            }
-            else if( !m_bTextured && !m_bWireframe )
-            {
-                m_bWireframe = true;
+            m_bWireframe = !m_bWireframe;
+            if( m_bWireframe )
                 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-            }
-            else
-            {
-                m_bTextured = true;
-                m_bWireframe = false;
-                glEnable( GL_TEXTURE_2D );
+            else 
                 glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-            }
+
+            //if( m_bTextured && !m_bWireframe )
+            //{
+            //    m_bTextured = false;
+            //    //glDisable( GL_TEXTURE_2D );
+            //}
+            //else if( !m_bTextured && !m_bWireframe )
+            //{
+            //    m_bWireframe = true;
+            //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+            //}
+            //else
+            //{
+            //    m_bTextured = true;
+            //    m_bWireframe = false;
+            //    //glEnable( GL_TEXTURE_2D );
+            //    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+            //}
         }
         break;
 
@@ -273,14 +278,21 @@ void MainWindow::CommonKeyboard( int key )
     switch(key)
     {
     case '0': Reset(); break;
-    case 'p': m_bPause = !m_bPause; break;
+    case 'p': MainApp::Get().TogglePause(); break;
     }
 
-    if( !m_bPause )
+    if( !MainApp::Get().IsPaused() )
     {
         switch(key)
         {
-        case '1': MainApp::Get().AddBigSphere(); break;
+        case '1': 
+            {
+                if( RandBoolean() )
+                    MainApp::Get().AddBigSphere(); 
+                else
+                    MainApp::Get().AddSmallSphere(); 
+            }
+            break;
         case '2': MainApp::Get().RemoveLastSphere(); break;
         case '3': /* Toggle jelly */ break;
         case 's': /* Toggle solid/cloth */ break;
@@ -361,7 +373,7 @@ void MainWindow::Reset()
     RotateCube( ~m_qRotationAccum );
     m_qRotationAccum.Clear();
     
-    m_bPause = false;
+    MainApp::Get().SetPause(false);
     m_fCubeHorizontalAngle = 0.0f;
     m_fCubeVerticalAngle = 0.0f;
 }

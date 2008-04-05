@@ -25,10 +25,14 @@ class CSceneManager : public Singleton<CSceneManager>
 private:
     //! The array of visual components
     typedef std::vector<gocs::IGOCVisual*> VisualArray_t;
+    
     VisualArray_t m_vVisuals;
+    VisualArray_t m_BigSpheres, m_SmallSpheres, m_Walls;
+    gocs::IGOCVisual* m_Cloth;
 
 private:
     friend Singleton<CSceneManager>;
+    CSceneManager();
     ~CSceneManager();
 
 public:
@@ -40,9 +44,7 @@ public:
     void Render() const;
 
     //! Adds a component to the array
-    void Register( gocs::IGOCVisual *pVisComp ) {
-        m_vVisuals.push_back( pVisComp );
-    }
+    void Register( gocs::IGOCVisual *pVisComp );
 
     //! Removes a component from the array
     void Unregister( gocs::IGOCVisual *pVisComp );

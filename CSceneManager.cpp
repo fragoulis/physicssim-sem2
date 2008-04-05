@@ -10,6 +10,9 @@
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
 
+CSceneManager::CSceneManager(): m_Cloth(0)
+{}
+
 // ------------------------------------------------------------------------
 CSceneManager::~CSceneManager()
 {
@@ -28,12 +31,55 @@ void CSceneManager::Init()
     MGRVertexArray::_Get().Init();
 }
 
+// ----------------------------------------------------------------------------
+void CSceneManager::Register( gocs::IGOCVisual *pVisComp ) 
+{
+    //if( pVisComp->GetOwner()->Is("BigSphere") )
+    //{
+    //    m_BigSpheres.push_back( pVisComp );
+    //}
+    //else if( pVisComp->GetOwner()->Is("SmallSphere") )
+    //{
+    //    m_SmallSpheres.push_back( pVisComp );
+    //}
+    //else if( pVisComp->GetOwner()->Is("Plane") )
+    //{
+    //    m_Walls.push_back( pVisComp );
+    //}
+    //else if( pVisComp->GetOwner()->Is("Cloth") )
+    //{
+    //    m_Cloth = pVisComp;
+    //}
+    
+    m_vVisuals.push_back( pVisComp );
+}
+
+#define FIND_AND_ERASE( list, obj ) \
+    list.erase( \
+            std::find( list.begin(), list.end(), obj ) \
+        )
+
 // ------------------------------------------------------------------------
 void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
 {
-    m_vVisuals.erase( 
-        std::find( m_vVisuals.begin(), m_vVisuals.end(), pVisComp ) 
-        );
+    //if( pVisComp->GetOwner()->Is("BigSphere") )
+    //{
+    //    FIND_AND_ERASE(m_BigSpheres, pVisComp);
+    //}
+    //else if( pVisComp->GetOwner()->Is("SmallSphere") )
+    //{
+    //    FIND_AND_ERASE(m_SmallSpheres, pVisComp);
+    //}
+    //else if( pVisComp->GetOwner()->Is("Plane") )
+    //{
+    //    FIND_AND_ERASE(m_Walls, pVisComp);
+    //}
+    //else if( pVisComp->GetOwner()->Is("Cloth") )
+    //{
+    //    m_Cloth = 0;
+    //}
+
+    FIND_AND_ERASE(m_vVisuals, pVisComp);
 }
 
 // ------------------------------------------------------------------------

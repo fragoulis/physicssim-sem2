@@ -8,12 +8,15 @@ CLogger::CLogger()
     ofstream log( LOG_FILE );
 }
 
-CLogger::CLogger( const string& entry ) 
+CLogger::CLogger( const string& entry, bool cout_only ) 
 {
-    ofstream log( LOG_FILE, ios_base::app );
+    if( !cout_only )
+    {
+        ofstream log( LOG_FILE, ios_base::app );
 
-    if( log.is_open() )
-        log << entry << endl;
+        if( log.is_open() )
+            log << entry << endl;
+    }
 
     cout << entry << endl;
 }

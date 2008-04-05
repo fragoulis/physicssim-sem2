@@ -9,11 +9,23 @@
 using namespace tlib::util;
 
 CVAPlane::CVAPlane( const VArrayId &id, 
-                    const Vec2f &halfsize, 
+                    const Vec2f &halfsize,
+                    const Vec3f &normal,
                     int stacks, 
                     int slices ):
 IVertexArray(id,stacks,slices),
-m_vHalfSize(halfsize)
+m_vHalfSize(halfsize),
+m_vNormal(normal)
+{}
+
+CVAPlane::CVAPlane( const VArrayId &id, 
+                    const float halfsize[],
+                    const float normal[],
+                    int stacks, 
+                    int slices ):
+IVertexArray(id,stacks,slices),
+m_vHalfSize(halfsize),
+m_vNormal(normal)
 {}
 
 void CVAPlane::Render() const
@@ -62,11 +74,9 @@ bool CVAPlane::Create( bool bTextured )
             m_Vertices[index][1] = temp.y();
             m_Vertices[index][2] = temp.z();
 
-            temp.Set( 0.0f, 0.0f, 1.0f );
-
-            m_Normals[index][0] = temp.x();
-            m_Normals[index][1] = temp.y();
-            m_Normals[index][2] = temp.z();
+            m_Normals[index][0] = m_vNormal.x();
+            m_Normals[index][1] = m_vNormal.y();
+            m_Normals[index][2] = m_vNormal.z();
 
             m_TexCoords[index][0] = (float)i / (stacks-1);
             m_TexCoords[index][1] = temp_tex_y;

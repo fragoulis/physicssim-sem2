@@ -31,7 +31,7 @@ private:
 public:
     // Constructors
     explicit TVector2() {}  // Default constructor is set to do nothing
-    explicit TVector2( const Type xy[] )       { Set( xyz[0], xyz[1] ); }
+    explicit TVector2( const Type xy[] )       { Set( xy[0], xy[1] ); }
     explicit TVector2( Type x, Type y ) { Set( x, y ); }
 
     // Accessors
