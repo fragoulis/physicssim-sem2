@@ -5,14 +5,48 @@
 #include "../GOCS/CGameObject.h"
 #include "../GOCS/GOCBoundingSphere.h"
 #include "../GOCS/GOCBoundingPlane.h"
+#include "../GOCS/GOCBoundingFinitePlane.h"
 #include "../GOCS/GOCBoundingBox.h"
 
 #include "../GOCS/GOCPhysicsPoint.h"
+#include <cassert>
 
 using namespace tlib::physics;
 using namespace tlib::gocs;
 
-#define E_ZERO 0.01f
+#define E_ZERO 0.00001f
+
+bool CollisionDetector::Check( IGOCBoundingVolume *a, 
+                               IGOCBoundingVolume *b, 
+                               CCollisionData     *data )
+{
+    if( a->GetVolumeType() == IGOCBoundingVolume::VT_SPHERE && 
+        b->GetVolumeType() == IGOCBoundingVolume::VT_SPHERE )
+    {
+        return CheckSphereSphere( a, b, data );
+    }
+
+    // --- SPHERE | PLANE ---
+    else if( a->GetVolumeType() == IGOCBoundingVolume::VT_SPHERE && 
+             b->GetVolumeType() == IGOCBoundingVolume::VT_PLANE )
+    {
+        return CheckSpherePlane( a, b, data );
+    }
+    else if( a->GetVolumeType() == IGOCBoundingVolume::VT_SPHERE && 
+             b->GetVolumeType() == IGOCBoundingVolume::VT_FIN_PLANE )
+    {
+        return CheckSphereFinitePlane( a, b, data );
+    }
+
+    // --- SPHERE | PRIMITIVE BOX ---
+    //else if( a->GetVolumeType() == IGOCBoundingVolume::VT_SPHERE && 
+    //         b->GetVolumeType() == IGOCBoundingVolume::VT_BOX )
+    //{
+    //    return CheckPrimitiveSphereBox( a, b );
+    //}
+
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -20,28 +54,27 @@ bool CollisionDetector::CheckSphereSphere( IGOCBoundingVolume *a,
                                            IGOCBoundingVolume *b, 
                                            CCollisionData     *data )
 {
+    // Get Bounding components
     GOCBoundingSphere *sphere1 = static_cast<GOCBoundingSphere*>(a);
     GOCBoundingSphere *sphere2 = static_cast<GOCBoundingSphere*>(b);
+
+    // Get physics components
+    CParticle *point1 = &((GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics"))->GetBody();
+    CParticle *point2 = &((GOCPhysicsPoint*)b->GetOwner()->GetGOC("Physics"))->GetBody();
 
     // Check if the absolute distance between the spheres is less than the sum of 
     // their radii
     const float fRadiiSum   = sphere1->GetRadius() + sphere2->GetRadius();
-    const Vec3f &vPosA      = sphere1->GetOwner()->GetTransform().GetPosition();
-    const Vec3f &vPosB      = sphere2->GetOwner()->GetTransform().GetPosition();
-    Vec3f vDist             = vPosA - vPosB;
+    Vec3f vDist             = point1->GetPosition() - point2->GetPosition();
     const float fDistance   = vDist.SqrLength();
 
     if( fRadiiSum * fRadiiSum <= fDistance ) return false;
     
     vDist.Normalize(); // Normalized distance equals collision normal
-
-    // Get physics components
-    GOCPhysicsPoint *p1 = (GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics");
-    GOCPhysicsPoint *p2 = (GOCPhysicsPoint*)b->GetOwner()->GetGOC("Physics");
     
     // Fill contact data
-    data->SetBody(0, &(p1->GetBody()) );
-    data->SetBody(1, &(p2->GetBody()) );
+    data->SetBody(0, point1 );
+    data->SetBody(1, point2 );
     data->SetPenetration( fRadiiSum - sqrt(fDistance) );
     data->SetRestitution( ( sphere1->GetElasticity() + sphere2->GetElasticity() ) * 0.5f );
     data->SetFriction( ( sphere1->GetFriction() + sphere2->GetFriction() ) * 0.5f );
@@ -56,26 +89,27 @@ bool CollisionDetector::CheckSpherePlane( IGOCBoundingVolume *a,
                                           IGOCBoundingVolume *b, 
                                           CCollisionData     *data ) 
 {
+    // Get Bounding components
     GOCBoundingSphere *sphere = static_cast<GOCBoundingSphere*>(a);
-    GOCBoundingPlane *plane = static_cast<GOCBoundingPlane*>(b);
+    GOCBoundingPlane   *plane = static_cast<GOCBoundingPlane*>(b);
+
+    // Get physics component
+    CParticle *point = &((GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics"))->GetBody();
 
     // Sphere data 
-    const Vec3f &vSpherePos = sphere->GetOwner()->GetTransform().GetPosition();
+    const Vec3f &vSpherePos = point->GetPosition();
     const float fRadius     = sphere->GetRadius();
     // Plane data
-    const Vec3f &vPlaneCenter = plane->GetOwner()->GetTransform().GetPosition();
+    const Vec3f &vPlaneCenter = plane->GetOwner()->GetPosition();
     const Vec3f &vNormal      = plane->GetNormal();
 
     // Find the distance from the plane
-    float fBallDistance = vNormal.Dot( vSpherePos ) - 
-                          fRadius - vNormal.Dot( vPlaneCenter );
+    float fBallDistance = vNormal.Dot( vSpherePos - vPlaneCenter ) - fRadius;
     
     if( fBallDistance >= 0 ) return false;
 
-    GOCPhysicsPoint *p1 = (GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics");
-
     // Fill contact data
-    data->SetBody(0, &(p1->GetBody()) );
+    data->SetBody(0, point );
     data->SetBody(1, NULL );
     data->SetPenetration( -fBallDistance );
     data->SetRestitution( ( sphere->GetElasticity() + plane->GetElasticity() ) * 0.5f );
@@ -85,6 +119,73 @@ bool CollisionDetector::CheckSpherePlane( IGOCBoundingVolume *a,
     return true;
 
 } // end CheckSpherePlane()
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+bool CollisionDetector::CheckSphereFinitePlane( IGOCBoundingVolume *a, 
+                                                IGOCBoundingVolume *b, 
+                                                CCollisionData     *data ) 
+{
+    // Get bounding components
+    GOCBoundingSphere     *sphere = static_cast<GOCBoundingSphere*>(a);
+    GOCBoundingFinitePlane *plane = static_cast<GOCBoundingFinitePlane*>(b);
+
+    // Get physics component
+    GOCPhysicsPoint *physics = (GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics");
+    CParticle *point = &(physics->GetBody());
+
+    // Sphere
+    const Vec3f &vSpherePos = point->GetPosition();
+    const float fRadius     = sphere->GetRadius();
+
+    // Plane data
+    const Vec3f &vPlaneCenter = plane->GetOwner()->GetPosition();
+    const Vec2f &vHalfSize    = plane->GetHalfSize();
+
+    const Vec3f Dist = vSpherePos - vPlaneCenter;
+
+    // Check if the sphere is withing the planes size
+    const Vec3f &Nx = plane->GetBinormal();     // Check binoral direction
+    float DistX = Nx.Dot( Dist ) - fRadius - vHalfSize.x();
+    if( DistX >= 0.0f ) return false;
+
+    Vec3f vNormal = plane->GetNormal();
+    Vec3f Ny      = vNormal.Cross(Nx);          // Check tangent direction
+    float DistY   = Ny.Dot( Dist ) - fRadius - vHalfSize.y();
+    if( DistY >= 0.0f ) return false;
+
+    // Find the distance from the plane
+    const Vec3f &prevDist = physics->GetPrevPosition() - vPlaneCenter;
+    float prevDistZ       = vNormal.Dot( prevDist ) - fRadius;
+    float DistZ           = vNormal.Dot( Dist ) - fRadius;
+    
+    float penetration;
+    if( ( DistZ < -E_ZERO && prevDistZ >= E_ZERO ) || ( DistZ > E_ZERO && prevDistZ <= -E_ZERO ) )
+    {
+        float vel = vNormal.Dot( point->GetVelocity() );
+        if( vel <= 0.0f ) 
+            penetration = -DistZ;
+        else {
+            penetration = DistZ;
+            vNormal = ~vNormal;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    // Fill contact data
+    data->SetBody(0, point );
+    data->SetBody(1, NULL );
+    data->SetPenetration( penetration );
+    data->SetRestitution( ( sphere->GetElasticity() + plane->GetElasticity() ) * 0.5f );
+    data->SetFriction( ( sphere->GetFriction() + plane->GetFriction() ) * 0.5f );
+    data->SetNormal(vNormal);
+
+    return true;
+
+} // end CheckSphereFinitePlane()
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -101,7 +202,7 @@ bool CollisionDetector::CheckPlaneParticle( IGOCBoundingVolume *a,
     const float fParticleRadius   = 0.01f; /* make particle a little bigger */
 
     // Plane data
-    const Vec3f &vPlaneCenter = plane->GetOwner()->GetTransform().GetPosition();
+    const Vec3f &vPlaneCenter = plane->GetOwner()->GetPosition();
     const Vec3f &vNormal      = plane->GetNormal();
 
     // Find the distance from the plane
@@ -122,7 +223,7 @@ bool CollisionDetector::CheckPlaneParticle( IGOCBoundingVolume *a,
 
     return true;
 
-} // end CheckPlaneDeformable()
+} // end CheckPlaneParticle()
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -131,23 +232,24 @@ bool CollisionDetector::CheckSphereParticle( IGOCBoundingVolume *a,
                                              CCollisionData *data ) 
 {
     if( !data ) return false;
+
+    // Get bounding component
     GOCBoundingSphere *sphere = static_cast<GOCBoundingSphere*>(a);
+
+    // Get physics component
+    CParticle *point = &((GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics"))->GetBody();
 
     // Sphere data
     const float fRadiiSum   = sphere->GetRadius() + 0.02f; /* make the sphere a little bigger */
-    const Vec3f &vSpherePos = sphere->GetOwner()->GetTransform().GetPosition();
-
-    Vec3f vDistance = vSpherePos - b->GetPosition();
+    Vec3f vDistance = point->GetPosition() - b->GetPosition();
     const float fDistance = vDistance.SqrLength();
 
     if( fDistance >= fRadiiSum * fRadiiSum ) return false;
 
     vDistance.Normalize();
 
-    GOCPhysicsPoint *p1 = (GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics");
-
     // Fill contact data
-    data->SetBody(0, &(p1->GetBody()) );
+    data->SetBody(0, point );
     data->SetBody(1, b );
     data->SetPenetration( fRadiiSum - sqrt(fDistance) );
     data->SetRestitution( 1.0f );
@@ -180,7 +282,8 @@ bool CollisionDetector::CheckParticleParticle( CParticle *a,
     data->SetBody(0, a );
     data->SetBody(1, b );
     data->SetPenetration( fRadiiSum - sqrt(fDistance) );
-    data->SetRestitution( 1.0f );
+    data->SetRestitution( 1.0f ); // assume no loss of energy
+
     data->SetFriction( 0.0f );
     data->SetNormal(vDistance);
 
@@ -193,28 +296,20 @@ bool CollisionDetector::CheckParticleParticle( CParticle *a,
 bool CollisionDetector::CheckPrimitiveSphereBox( IGOCBoundingVolume *a, 
                                                  IGOCBoundingVolume *b ) 
 {
-    //GOCBoundingSphere *sphere = static_cast<GOCBoundingSphere*>(a);
-    //GOCBoundingBox *box = static_cast<GOCBoundingBox*>(b);
+    GOCBoundingSphere *sphere = static_cast<GOCBoundingSphere*>(a);
+    GOCBoundingBox *box = static_cast<GOCBoundingBox*>(b);
 
-    //const Quatf &qBoxOri = box->GetOwner()->GetTransform().GetOrientation();
-    //const Vec3f &vBoxPos = box->GetOwner()->GetTransform().GetPosition();
+    const Vec3f &vBoxPos = box->GetOwner()->GetPosition();
+    const Vec3f &vRelPos = sphere->GetOwner()->GetPosition();
 
-    //Vec3f vRelPos = sphere->GetOwner()->GetTransform().GetPosition();
-    //vRelPos -= vBoxPos;
-    //(~qBoxOri).Rotate(vRelPos);
+    //if( vRelPos.x() - sphere->GetRadius() > vBoxPos.x() + box->GetHalfSize().x() ) return false;
+    //if( vRelPos.x() + sphere->GetRadius() < vBoxPos.x() - box->GetHalfSize().x() ) return false;
 
-    ////std::cout << "Relative ... " << vRelPos << std::endl;
+    //if( vRelPos.y() - sphere->GetRadius() > vBoxPos.y() + box->GetHalfSize().y() ) return false;
+    //if( vRelPos.y() + sphere->GetRadius() < vBoxPos.y() - box->GetHalfSize().y() ) return false;
 
-    //if( fabs(vRelPos.x()) - sphere->GetRadius() > box->GetHalfSize().x() ||
-    //    fabs(vRelPos.y()) - sphere->GetRadius() > box->GetHalfSize().y() ||
-    //    fabs(vRelPos.z()) - sphere->GetRadius() > box->GetHalfSize().z() )
-    //{
-    //    return false;
-    //}
-
-    //static int num = 0;
-    //std::cout << "Collision Detected ... " << num << std::endl;
-    //num++;
+    //if( vRelPos.z() - sphere->GetRadius() > vBoxPos.z() + box->GetHalfSize().z() ) return false;
+    //if( vRelPos.z() + sphere->GetRadius() < vBoxPos.z() - box->GetHalfSize().z() ) return false;
 
     return true;
 }

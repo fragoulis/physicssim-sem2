@@ -18,25 +18,36 @@ SmallMass   0.25
 
 .BoundingSphere
 BigRadius       0.05
-BigElasticity   0.95
-BigFriction     0.1
+BigElasticity   0.8
+BigFriction     0.0
 SmallRadius     0.02
-SmallElasticity 0.95
-SmallFriction   0.1
+SmallElasticity 0.9
+SmallFriction   0.0
 
 .Plane
 Halfsize    0.5,0.5
 Normal      0.0,0.0,1.0
 Stacks      2
 Slices      2
-Elasticity  0.95
-Friction    0.1
+Elasticity  0.9
+Friction    0.01
 
 .Cloth
 Halfsize    0.25,0.5
+BoundingBox 0.25,0.5,0.5
 Normal      0.0,0.0,1.0
 Mass        1.0
 Stacks      10
 Slices      10
 Elasticity  0.0
-Friction    1.0
+Friction    0.1
+
+.Shelf
+Halfsize    0.25,0.5
+Normal      0.0,0.0,1.0
+Binormal    1.0,0.0,0.0
+Stacks      2
+Slices      2
+Elasticity  0.9
+Friction    0.1
+Doublesided 1

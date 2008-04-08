@@ -3,7 +3,8 @@
 using namespace tlib::gocs;
 
 GOCTBoundingPlane::GOCTBoundingPlane( const char *id ):
-IGOCTBounding(id)
+IGOCTBounding(id),
+m_bDoublesided(false)
 {}
 
 IGOComponent* GOCTBoundingPlane::MakeComponent() const

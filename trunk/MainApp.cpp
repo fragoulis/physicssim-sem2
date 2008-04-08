@@ -14,10 +14,15 @@
 // Collision componenet templates
 #include "GOCS/Templates/GOCTBoundingSphere.h"
 #include "GOCS/Templates/GOCTBoundingPlane.h"
+#include "GOCS/Templates/GOCTBoundingFinitePlane.h"
 #include "GOCS/Templates/GOCTBoundingDWBox.h"
 
-// The world object class
-#include "GOCS/CGameObject.h"
+#include "GOCS/CGameObject.h"       // TODO: This dependecies exist because of the lack
+#include "GOCS/GOCBoundingPlane.h"  //       of an inter-component event system.
+#include "GOCS/GOCBoundingFinitePlane.h"
+#include "GOCS/GOCBoundingDWBox.h"
+#include "GOCS/GOCBoundingBox.h"
+#include "GOCS/GOCPhysicsCloth.h"
 
 #include "Util/Config.h"
 
@@ -26,7 +31,7 @@ using namespace tlib;
 
 static MainApp g_MainApp;
 
-CPhysicsThread MainApp::m_tPhysics;
+//CPhysicsThread MainApp::m_tPhysics;
 
 // ----------------------------------------------------------------------------
 MainApp& MainApp::Get() { return g_MainApp; }
@@ -42,8 +47,7 @@ void MainApp::OnCreate()
     InitTemplates();
     InitPlanes();
     InitCloth();
-
-    m_tPhysics.Start();
+    InitShelf();
 }
 
 // ----------------------------------------------------------------------------
@@ -60,14 +64,13 @@ void MainApp::OnDestroy()
     for( int i=0; i<MAX_PLANES; ++i )
         delete m_Planes[i];
 
-    // Delete cloth
+    // Delete other objects
     delete m_Cloth;
+    delete m_Shelf;
 
     // Destroy managers after all objects are destroy !!!
     MGRScene::Destroy();
     MGRPhysics::Destroy();
-
-    m_tPhysics.Terminate();
 }
 
 // ----------------------------------------------------------------------------
@@ -78,6 +81,13 @@ void MainApp::GetNumOfSpheres( int &ss, int &bs )
 }
 
 // ----------------------------------------------------------------------------
+void MainApp::ToggleClothShelf()
+{
+    m_Cloth->Toggle();
+    m_Shelf->Toggle();
+}
+
+// ----------------------------------------------------------------------------
 void MainApp::RemoveLastSphere()
 {
     if( m_Spheres.size() )
@@ -85,7 +95,7 @@ void MainApp::RemoveLastSphere()
         // Get last element
         CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
         
-        if( el->Is("MyBigSphere") ) {
+        if( el->Is("BigSphere") ) {
             m_iNumOfBigSpheres--;
         } else {
             m_iNumOfSmallSpheres--;
@@ -123,6 +133,77 @@ void MainApp::AddSmallSphere()
 }
 
 // ----------------------------------------------------------------------------
+void MainApp::RotateCloth( const Quatf& qRot )
+{
+    Vec3f &vPos = m_Cloth->GetTransform().GetPosition();
+    qRot.Rotate( vPos );
+
+    GOCPhysicsCloth *physics = GET_OBJ_GOC( m_Cloth, GOCPhysicsCloth, "Physics" );
+    assert(physics);
+    physics->Rotate(qRot);
+
+    //GOCBoundingDWBox *bnd = GET_OBJ_GOC( m_Cloth, GOCBoundingDWBox, "BoundingVolume" );
+    //assert(bnd);
+    //GOCBoundingBox *bbox = (GOCBoundingBox*)bnd->GetPrimitive();
+    //Vec3f hs = bbox->GetHalfSize();
+    //qRot.Rotate(hs);
+    //bbox->SetHalfSize(hs);
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::RotateShelf( const Quatf& qRot )
+{
+    // Rotate plane
+    Vec3f &vPos = m_Shelf->GetTransform().GetPosition();
+    qRot.Rotate( vPos );
+
+    // Add the rotation
+    Quatf &qOri = m_Shelf->GetTransform().GetOrientation();
+    qOri = qRot * qOri;
+
+    // Corrent normal
+    GOCBoundingFinitePlane *bnd = GET_OBJ_GOC( m_Shelf, GOCBoundingFinitePlane, "BoundingVolume" );
+    Vec3f normal = bnd->GetNormal();
+    qRot.Rotate( normal );
+    normal.Normalize();
+    bnd->SetNormal( normal );
+
+    normal = bnd->GetBinormal();
+    qRot.Rotate( normal );
+    normal.Normalize();
+    bnd->SetBinormal( normal );
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::RotatePlanes( const Quatf& qRot )
+{
+    for( int i=0; i<MAX_PLANES; ++i )
+    {
+        // Must rotate the orientation 
+        // Then we must also notify interested components about that ??? 
+        // [Inter-component message systems?]
+        // OnPositionChange() && OnOrientationChange() ???
+
+        CGameObject *plane = m_Planes[i];
+        
+        // Rotate plane
+        Vec3f &vPos = plane->GetTransform().GetPosition();
+        qRot.Rotate( vPos );
+
+        // Add the rotation
+        Quatf &qOri = plane->GetTransform().GetOrientation();
+        qOri = qRot * qOri;
+
+        // Corrent normal
+        GOCBoundingPlane *bnd = GET_OBJ_GOC( plane, GOCBoundingPlane, "BoundingVolume" );
+        Vec3f normal = bnd->GetNormal();
+        qRot.Rotate( normal );
+        normal.Normalize();
+        bnd->SetNormal( normal );
+    } // for( ... )
+}
+
+// ----------------------------------------------------------------------------
 void MainApp::Reset()
 {
     // Remove all spheres
@@ -144,8 +225,9 @@ void MainApp::InitTemplates()
 {
     CFG_CLIENT_OPEN;
 
-    float radius, mass, elasticity, friction, size[2], normal[3];
+    float radius, mass, elasticity, friction, size[2], bbox[3], normal[3], binormal[3];
     int stacks, slices;
+    bool doublesided;
 
     // ------------------------------------------------------------------------
     // CUSTOM SPHERE TEMPLATE
@@ -222,17 +304,18 @@ void MainApp::InitTemplates()
     CGOCManager::Get().SetTemplate( tplPlane );
 
     GOCTBoundingPlane *tplBpln = new GOCTBoundingPlane("BoundingPlane");
-    tplBpln->SetHalfSize( Vec2f( size ) );
     tplBpln->SetNormal( Vec3f( normal ) );
     tplBpln->SetElasticity(elasticity);
     tplBpln->SetFriction(friction);
     CGOCManager::Get().SetTemplate( tplBpln );
+
 
     // ------------------------------------------------------------------------
     // CLOTH TEMPLATES
     CFG_LOAD("Cloth");
 
     CFG_2fv("Halfsize", size);
+    CFG_3fv("BoundingBox", bbox);
     CFG_1f("SmallMass", mass);
     CFG_1i("Stacks", stacks);
     CFG_1i("Slices", slices);
@@ -246,7 +329,7 @@ void MainApp::InitTemplates()
     CGOCManager::Get().SetTemplate( vaPlane );
 
     GOCTBoundingDWBox *tplBbox = new GOCTBoundingDWBox("ClothBoundingDef");
-    //tplBbox->SetHalfSize( Vec3f( 0.25f, 0.5f, 0.2f ) );
+    tplBbox->SetHalfSize( Vec3f( bbox ) );
     tplBbox->SetElasticity(elasticity);
     tplBbox->SetFriction(friction);
     CGOCManager::Get().SetTemplate( tplBbox );
@@ -257,6 +340,32 @@ void MainApp::InitTemplates()
     tplDfmr->SetSlices(slices);
     tplDfmr->SetMass(mass);
     CGOCManager::Get().SetTemplate( tplDfmr );
+
+    // ------------------------------------------------------------------------
+    // SHELF TEMPLATES
+    CFG_LOAD("Shelf");
+
+    CFG_2fv("Halfsize", size);
+    CFG_3fv("Normal", normal);
+    CFG_3fv("Binormal", binormal);
+    CFG_1f("Elasticity", elasticity);
+    CFG_1f("Friction", friction);
+    CFG_1b("Doublesided", doublesided);
+
+    tplPlane = new GOCTVisualIMQuad("VisualShelf");
+    tplPlane->SetHalfSize( Vec2f( size ) );
+    tplPlane->setDoublesided(doublesided);
+    CGOCManager::Get().SetTemplate( tplPlane );
+
+    GOCTBoundingFinitePlane *tplBfpln = new GOCTBoundingFinitePlane("DoubleSidePlane");
+    tplBfpln->setDoublesided(doublesided);
+    tplBfpln->SetHalfSize( Vec2f( size ) );
+    tplBfpln->SetNormal( Vec3f( normal ) );
+    tplBfpln->SetBinormal( Vec3f( binormal ) );
+    tplBfpln->SetElasticity(elasticity);
+    tplBfpln->SetFriction(friction);
+    CGOCManager::Get().SetTemplate( tplBfpln );
+
 } // end InitTemplates()
 
 // ----------------------------------------------------------------------------
@@ -326,4 +435,17 @@ void MainApp::InitCloth()
     ADD_GOC( m_Cloth, "ClothVisualPlane" );
     ADD_GOC( m_Cloth, "ClothDeformable" );
     ADD_GOC( m_Cloth, "ClothBoundingDef" );
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::InitShelf()
+{
+    // TODO: Read all values from config file
+
+    m_Shelf = new CGameObject("Shelf");
+    m_Shelf->Deactivate();
+    m_Shelf->GetTransform().GetPosition().Set( -0.25f, -0.2f, 0.0f );
+    m_Shelf->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    ADD_GOC( m_Shelf, "VisualShelf" );
+    ADD_GOC( m_Shelf, "DoubleSidePlane" );
 }

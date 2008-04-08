@@ -8,8 +8,6 @@ namespace tlib
 namespace gocs
 {
 
-class GOCBoundingBox;
-
 /**
  * @class GOCTBoundingBox
  * 

@@ -1,6 +1,6 @@
 #include "CPhysicsThread.h"
 #include "../MainApp.h"
-//#include "../CPhysicsManager.h"
+#include "../CPhysicsManager.h"
 #include "../Time/Clock.h"
 #include "../Util/CLogger.h"
 
@@ -13,12 +13,12 @@ void CPhysicsThread::Run( void *lpArgs )
     int i = 0;
     while(IsRunning())
     {
-        Clock::Get().FrameStep();
-        float delta = (float)Clock::Get().GetTimeDelta();
+        //Clock::Get().FrameStep();
+        //float delta = (float)Clock::Get().GetTimeDelta();
 
-        if( !MainApp::Get().IsPaused() )
-        {
-            
-        }
+        //if( !MainApp::Get().IsPaused() )
+        //{
+        //    //MGRPhysics::Get().Update( delta );
+        //}
     }
 }

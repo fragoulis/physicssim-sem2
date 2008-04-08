@@ -6,8 +6,6 @@ namespace tlib
 namespace gocs
 {
 
-    class GOCBoundingSphere;
-
 /**
  * @class GOCTBoundingSphere
  * 

@@ -3,7 +3,8 @@
 using namespace tlib::gocs;
 
 GOCTVisualIMQuad::GOCTVisualIMQuad( const char *id ):
-IGOCTemplate(id)
+IGOCTemplate(id),
+m_bDoublesided(false)
 {}
 
 IGOComponent* GOCTVisualIMQuad::MakeComponent() const

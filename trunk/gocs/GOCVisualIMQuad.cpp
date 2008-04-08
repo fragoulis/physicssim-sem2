@@ -12,6 +12,7 @@ using namespace tlib::gocs;
 
 GOCVisualIMQuad::GOCVisualIMQuad( const GOCTVisualIMQuad * const tpl ):
 IGOCVisual(),
+m_bDoublesided(tpl->IsDoublesided()),
 m_vHalfSize(tpl->GetHalfSize())
 {}
 
@@ -20,6 +21,11 @@ GOCVisualIMQuad::~GOCVisualIMQuad()
 
 void GOCVisualIMQuad::Render() const 
 {
+    if( !IsOwnerActive() ) return;
+
+    if( m_bDoublesided ) 
+        glDisable(GL_CULL_FACE);
+
     glPushMatrix();
     {
         const Vec3f &vPos = GetOwner()->GetTransform().GetPosition();
@@ -41,5 +47,8 @@ void GOCVisualIMQuad::Render() const
         glEnd();
     }
     glPopMatrix();
+
+    if( m_bDoublesided ) 
+        glEnable(GL_CULL_FACE);
 
 } // end Render()

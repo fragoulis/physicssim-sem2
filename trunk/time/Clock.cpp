@@ -83,9 +83,6 @@ void Clock::UpdateDeltaTime()
 
     // Calculate the average of the N previous time deltas
     double dSum = 0.0;
-    //for( int i=0; i<FRAMES_SAVED; ++i ) {
-    //    dSum += m_vdFrameTimes[i];
-    //}
     for( int i=0; i<FRAMES_SAVED; dSum += m_vdFrameTimes[i++] );
 
     m_dTimeDelta = dSum / FRAMES_SAVED;

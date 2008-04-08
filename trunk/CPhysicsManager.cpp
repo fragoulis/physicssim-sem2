@@ -34,40 +34,39 @@ void CPhysicsManager::Init()
 // ----------------------------------------------------------------------------
 void CPhysicsManager::Update( float delta ) 
 {
+    if( delta <= 0.0f ) {
+        return;
+    }
+
     // Integration
-    if( delta <= m_fTimeStep )
+    if( delta > m_fTimeStep )
     {
-        BodyList::const_iterator i = m_Bodies.begin();
-            for(; i!= m_Bodies.end(); ++i )
-                (*i)->Update( delta );
-
-        CheckCollisions();
-        m_CollisionStack.ResolveCollisions( delta );
-    }
-    else {
-        float accum = delta;
-        while( accum >= m_fTimeStep )
+        while( delta >= m_fTimeStep )
         {
-            BodyList::const_iterator i = m_Bodies.begin();
-            for(; i!= m_Bodies.end(); ++i )
-                (*i)->Update( m_fTimeStep );
-
-            CheckCollisions();
-            m_CollisionStack.ResolveCollisions( m_fTimeStep );
-
-            accum -= m_fTimeStep;
+            UpdateCycle( m_fTimeStep );
+            delta -= m_fTimeStep;
         }
+
+        if( delta > 0.0f )
+            UpdateCycle( delta );
     }
+    else
+        UpdateCycle( delta );
 
-    //BodyList::const_iterator i = m_Bodies.begin();
-    //for(; i!= m_Bodies.end(); ++i )
-    //    (*i)->Update( delta );
+    BodyList::const_iterator i = m_Bodies.begin();
+    for(; i!= m_Bodies.end(); ++i )
+        (*i)->UpdateOwner();
+}
 
-    //// Collision detection
-    //CheckCollisions();
+// ----------------------------------------------------------------------------
+void CPhysicsManager::UpdateCycle( float delta )
+{
+    BodyList::const_iterator i = m_Bodies.begin();
+    for(; i!= m_Bodies.end(); ++i )
+        (*i)->Update( delta );
 
-    //// Collision resoving
-    //m_CollisionStack.ResolveCollisions( delta );
+    CheckCollisions();
+    m_CollisionStack.ResolveCollisions( delta );
 }
 
 // ----------------------------------------------------------------------------
@@ -80,7 +79,6 @@ void CPhysicsManager::CheckCollisions()
     for(; i != m_CollidableSpheres.end(); ++i )
     {
         IGOCBoundingVolume *sphere = *i;
-        
         
         // ... with all planes ...
         CollidableBodyList::const_iterator j = m_CollidablePlanes.begin();
@@ -100,20 +98,29 @@ void CPhysicsManager::CheckCollisions()
         } // end spheres
 
         // ... with the cloth ...
-        GOCBoundingDeformable *cloth = (GOCBoundingDeformable*)m_Cloth;
-        if( CollisionDetector::CheckPrimitiveSphereBox( 
-            sphere, 
-            cloth->GetPrimitive() ) 
-            )
+        if( m_Cloth->IsOwnerActive() )
         {
-            // Check sphere with all particles of the cloth
-            while( CParticle *p = cloth->GetParticle() )
+            // Have cloth-ball detection off
+            GOCBoundingDeformable *cloth = (GOCBoundingDeformable*)m_Cloth;
+            if( CollisionDetector::CheckPrimitiveSphereBox( 
+                sphere, 
+                cloth->GetPrimitive() ) 
+                )
             {
-                data = m_CollisionStack.GetFreeSpot();
-                if( CollisionDetector::CheckSphereParticle( sphere, p, data ) )
-                    m_CollisionStack.AddCollision( data );
-            }
-        } // end cloth
+                // Check sphere with all particles of the cloth
+                while( CParticle *p = cloth->GetParticle() )
+                {
+                    data = m_CollisionStack.GetFreeSpot();
+                    if( CollisionDetector::CheckSphereParticle( sphere, p, data ) )
+                        m_CollisionStack.AddCollision( data );
+                }
+            } // end cloth
+        }
+        else { // Check with common two sided plane
+            data = m_CollisionStack.GetFreeSpot();
+            if( sphere->Check( m_Shelf, data ) )
+                m_CollisionStack.AddCollision( data );
+        }
 
     } // end for( spheres ... )
 
@@ -159,6 +166,10 @@ void CPhysicsManager::RegisterCollidable( IGOCBoundingVolume* body )
 
     case IGOCBoundingVolume::VT_DEFORMABLE:
         m_Cloth = body;
+        break;
+
+    case IGOCBoundingVolume::VT_FIN_PLANE:
+        m_Shelf = body;
         break;
     }
 }

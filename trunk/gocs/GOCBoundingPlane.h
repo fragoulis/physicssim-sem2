@@ -1,7 +1,5 @@
 #pragma once
 #include "Interfaces/IGOCBoundingVolume.h"
-#include "../Math/TVector2.h"
-using tlib::math::Vec2f;
 #include "../Math/TVector3.h"
 using tlib::math::Vec3f;
 
@@ -19,14 +17,15 @@ namespace gocs
 class GOCBoundingPlane : public IGOCBoundingVolume
 {
 private:
-    //! Planes half size
-    Vec2f m_vHalfSize;
+    //! Double-sided plane flag
+    bool m_bDoublesided;
 
     //! The plane's normal
     Vec3f m_vNormal;
 
 public:
     GOCBoundingPlane( const GOCTBoundingPlane * const tpl );
+    virtual ~GOCBoundingPlane() {}
 
     virtual ComponentId_t GetID() const {
         return CHash::_("BoundingPlane");
@@ -34,9 +33,9 @@ public:
 
     virtual void Init();
 
-    const Vec2f& GetHalfSize() const { return m_vHalfSize; }
+    bool IsDoublesided() const { return m_bDoublesided; }
     const Vec3f& GetNormal() const { return m_vNormal; }
-    Vec3f& GetNormal() { return m_vNormal; }
+    void SetNormal( const Vec3f &n ) { m_vNormal = n; }
 };
 
 } // end namespace gocs

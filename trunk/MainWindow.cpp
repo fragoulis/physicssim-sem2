@@ -7,12 +7,6 @@
 #include "Util/CReplayer.h"
 #include "Math/Random.h"
 
-#include "GOCS/CGameObject.h"       // TODO: This dependecies exist because of the lack
-#include "GOCS/GOCBoundingPlane.h"  //       of an inter-component event system.
-#include "GOCS/GOCBoundingDWBox.h"
-#include "GOCS/GOCBoundingBox.h"
-#include "GOCS/GOCPhysicsCloth.h"
-
 #include "Util/CLogger.h"
 #include "Util/Config.h"
 
@@ -87,6 +81,8 @@ void MainWindow::OnCreate()
     m_Lights[index].TurnOn();
 
     LIGHT( 0, Vec3f( 0.0f, 0.0f, 0.4f ) );
+
+    //MainApp::GetPhysics().Start(); // Safely start the physics thread
 }
 
 //-----------------------------------------------------------------------------
@@ -101,11 +97,7 @@ void MainWindow::OnDisplay()
 
     //RenderHelpGrid( 40, 0.5f );
     MGRScene::Get().Render();
-    //PrintStats();
-
-    CGameObject *cloth = MainApp::Get().GetCloth();
-    GOCBoundingDWBox *bnd = GET_OBJ_GOC( cloth, GOCBoundingDWBox, "BoundingVolume" );
-    assert(bnd);
+    PrintStats();
 
     SwapBuffers();
 }
@@ -114,7 +106,7 @@ void MainWindow::OnDisplay()
 void MainWindow::OnIdle()
 {
     float delta = (float)Clock::Get().GetTimeDelta();
-    
+
     // =========================================================================
     if( m_AppState == AS_REPLAY )
     {
@@ -164,7 +156,7 @@ void MainWindow::OnKeyboard( int key, bool down )
     switch(key)
     {
     case 'q': Quit(); break;
-    case 's': m_bShowControls = !m_bShowControls; break;
+    case 'z': m_bShowControls = !m_bShowControls; break;
     case 'w': 
         {
             m_bWireframe = !m_bWireframe;
@@ -200,6 +192,9 @@ void MainWindow::OnKeyboard( int key, bool down )
                 SetFullscreen(true);
         }
         break;
+
+    case 187: MGRPhysics::Get().MultTimeStep(2.0f); break; // '='
+    case 189: MGRPhysics::Get().MultTimeStep(0.5f); break; // '-'
     }
 
     if( m_AppState == AS_NORMAL ) {
@@ -295,7 +290,7 @@ void MainWindow::CommonKeyboard( int key )
             break;
         case '2': MainApp::Get().RemoveLastSphere(); break;
         case '3': /* Toggle jelly */ break;
-        case 's': /* Toggle solid/cloth */ break;
+        case 's': MainApp::Get().ToggleClothShelf(); break;
         case 'v': /* Toggle video screen */ break;
         case 'c': /* Toggle cameras */ break;
         }
@@ -401,43 +396,9 @@ void MainWindow::RotateCube( float delta )
 //-----------------------------------------------------------------------------
 void MainWindow::RotateCube( const Quatf &qCirRot )
 {
-    for( int i=0; i<MainApp::MAX_PLANES; ++i )
-    {
-        // Must rotate the orientation 
-        // Then we must also notify interested components about that ??? 
-        // [Inter-component message systems?]
-        // OnPositionChange() && OnOrientationChange() ???
-
-        CGameObject *plane = MainApp::Get().GetPlane(i);
-        
-        // Rotate plane
-        Vec3f &vPos = plane->GetTransform().GetPosition();
-        qCirRot.Rotate( vPos );
-
-        // Add the rotation
-        Quatf &qRot = plane->GetTransform().GetOrientation();
-        qRot = qCirRot * qRot;
-
-        // Corrent normal
-        GOCBoundingPlane *bnd = GET_OBJ_GOC( plane, GOCBoundingPlane, "BoundingVolume" );
-        qCirRot.Rotate( bnd->GetNormal() );
-        bnd->GetNormal().Normalize();
-    } // for( ... )
-
-    // Rotate cloth as well
-    Vec3f &vPos = MainApp::Get().GetCloth()->GetTransform().GetPosition();
-    qCirRot.Rotate( vPos );
-    //Quatf &qRot = MainApp::Get().GetCloth()->GetTransform().GetOrientation();
-    //qRot = qCirRot * qRot;
-
-    CGameObject *cloth = MainApp::Get().GetCloth();
-    GOCPhysicsCloth *physics = GET_OBJ_GOC( cloth, GOCPhysicsCloth, "Physics" );
-    assert(physics);
-    physics->Rotate(qCirRot);
-
-    //GOCBoundingDWBox *bnd = GET_OBJ_GOC( cloth, GOCBoundingDWBox, "BoundingVolume" );
-    //assert(bnd);
-    //bnd->WrapObject();
+    MainApp::Get().RotatePlanes( qCirRot );
+    MainApp::Get().RotateCloth( qCirRot );
+    MainApp::Get().RotateShelf( qCirRot );
 }
 
 //-----------------------------------------------------------------------------
@@ -475,6 +436,8 @@ void MainWindow::OnDestroy()
     Clock::Destroy();
     InputRec::Destroy();
     InputReplay::Destroy();
+
+    //MainApp::GetPhysics().Terminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -499,6 +462,11 @@ void MainWindow::PrintStats()
     float deltaY = 0.05f, startY = 1.0f;
     #define TEXT_Y startY-=deltaY
 
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "Delta: %.4f", (float)Clock::Get().GetTimeDelta() );
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "TimeStep: %.4f", MGRPhysics::Get().GetTimeStep() );
+
     int smallspheres, bigspheres;
     MainApp::Get().GetNumOfSpheres( smallspheres, bigspheres );
     glRasterPos2f( -1.0f, TEXT_Y );
@@ -515,34 +483,34 @@ void MainWindow::PrintStats()
     }
     Printf( "Gamestate: %s", gamestate.c_str() );
 
-    if( m_bShowControls )
-    {
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "Hold left mouse button and drag to rotate the cube" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'1' to add sphere" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'2' to remove the last ball added" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'P' to pause" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'R' to toggle record mode" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'O' to replay the last recorded try" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'W' toggle wireframe" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'F' toggle fullscreen" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'Q' to quit" );
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'S' to close help" );
-    }
-    else
-    {
-        glRasterPos2f( -1.0f, TEXT_Y );
-        Printf( "'S' to show help" );
-    }
+    //if( m_bShowControls )
+    //{
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "Hold left mouse button and drag to rotate the cube" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'1' to add sphere" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'2' to remove the last ball added" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'P' to pause" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'R' to toggle record mode" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'O' to replay the last recorded try" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'W' toggle wireframe" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'F' toggle fullscreen" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'Q' to quit" );
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'S' to close help" );
+    //}
+    //else
+    //{
+    //    glRasterPos2f( -1.0f, TEXT_Y );
+    //    Printf( "'S' to show help" );
+    //}
 
     glEnable( GL_LIGHTING );
 }

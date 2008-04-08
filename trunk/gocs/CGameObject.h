@@ -1,5 +1,3 @@
-#ifndef __TLIB_GOCS_IGAMEOBJECT_H__
-#define __TLIB_GOCS_IGAMEOBJECT_H__
 #pragma once
 #include <map>
 #include "CTransform.h"
@@ -26,6 +24,9 @@ protected:
     typedef unsigned ComponentId_t;
 
 private:
+    //! Object's active flag
+    bool m_bActive;
+
     //! Object's transformation node
     CTransform m_Transform;
 
@@ -50,13 +51,26 @@ public:
     const CTransform& GetTransform() const { return m_Transform; }
     CTransform& GetTransform() { return m_Transform; }
 
+    const Vec3f GetPosition() const { return m_Transform.GetPosition(); }
+    const Quatf GetOrientation() const { return m_Transform.GetOrientation(); }
+
     // Mutators
     void SetID( ObjectId_t id ) { m_ID = id; }
     void SetTransform( const CTransform &tr ) { m_Transform = tr; }
 
+    void SetPosition( const Vec3f &pos ) { m_Transform.SetPosition( pos ); }
+    void SetOrientation( const Quatf &ori ) { m_Transform.SetOrientation( ori ); }
+
+    //! Checks given string with object's id
     bool Is( const char *id ) const {
         return (m_ID == CHash::_(id));
     }
+
+    // Control object's status
+    bool IsActive() const { return m_bActive; }
+    void Activate() { m_bActive = true; }
+    void Deactivate() { m_bActive = false; }
+    void Toggle() { m_bActive = !m_bActive; }
 
     //! Adds a component to the object's component list
     //! @param newGOC Pointer to the new component
@@ -76,5 +90,3 @@ public:
 
 } // end namespace gocs
 } // end namespace tlib
-
-#endif // __TLIB_GOCS_IGAMEOBJECT_H__
