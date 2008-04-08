@@ -23,7 +23,7 @@ namespace gocs
 class IGOCBoundingVolume : public IGOComponent
 {
 public:
-    enum VolumeType { VT_PLANE = 1, VT_SPHERE, VT_BOX, VT_DEFORMABLE };
+    enum VolumeType { VT_PLANE = 1, VT_FIN_PLANE, VT_SPHERE, VT_BOX, VT_DEFORMABLE };
 
 protected:
     //! Set the body's volume type and register's the object
@@ -55,6 +55,7 @@ public:
 
     //! Override this function
     bool Check( IGOCBoundingVolume *other, CCollisionData *coldata );
+    virtual void Init();
 
     int GetVolumeType() const   { return m_iType; }
     float GetElasticity() const { return m_fElasticity; }

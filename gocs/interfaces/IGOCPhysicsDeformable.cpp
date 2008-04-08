@@ -18,9 +18,9 @@ IGOCPhysicsDeformable::~IGOCPhysicsDeformable()
 
 void IGOCPhysicsDeformable::Init()
 {
-    Setup();
     m_Visual = GET_GOC( IGOCVisualVertexArray, "Visual" );
     assert(m_Visual);
+    Setup();
 }
 
 CParticle* IGOCPhysicsDeformable::GetParticle( int index ) 
@@ -31,7 +31,7 @@ CParticle* IGOCPhysicsDeformable::GetParticle( int index )
 
 void IGOCPhysicsDeformable::Update( float delta )
 {
-    assert(m_Visual);
+    if( !IsOwnerActive() ) return;
 
     // Update springs
     for( int i=0; i<m_iNumOfSprings; ++i )
@@ -39,20 +39,23 @@ void IGOCPhysicsDeformable::Update( float delta )
 
     // Update particles
     for( int i=0; i<m_iNumOfParticles; ++i )
-    {    
-        m_Particles[i].SetAcceleration(m_vAcceleration);
         m_Particles[i].Integrate(delta);
 
+} // Update()
+
+void IGOCPhysicsDeformable::UpdateOwner() 
+{
+    assert(m_Visual);
+
+    // Update vertices and normals
+    for( int i=0; i<m_iNumOfParticles; ++i )
+    {    
         // Update vertices along with integration
         m_Visual->SetVertex( i, m_Particles[i].GetPosition().xyz() );
     }
 
     UpdateNormals();
-
-    // After updating copy the particle's position to the object's
-    //GetOwner()->GetTransform().SetPosition( m_Body.GetPosition() );
-
-} // Update()
+}
 
 void IGOCPhysicsDeformable::UpdateNormals()
 {

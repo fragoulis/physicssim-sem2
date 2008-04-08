@@ -28,7 +28,6 @@ public:
         return CHash::_("BoundingBox");
     }
 
-    Vec3f& GetHalfSize() { return m_vHalfSize; }
     const Vec3f& GetHalfSize() const { return m_vHalfSize; }
     void SetHalfSize( const Vec3f &s ) { m_vHalfSize = s; }
 };

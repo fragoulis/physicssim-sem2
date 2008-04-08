@@ -69,6 +69,7 @@ public:
     void SetVelocity( const Vec3f &vVelocity )          { m_vVelocity = vVelocity; }
     void SetAcceleration( const Vec3f &vAcceleration )  { m_vAcceleration = vAcceleration; }
     void SetDamping( float fDamping )                   { m_fDamping = fDamping; }
+    void SetDrag( float fDrag )                         { m_fDrag = fDrag; }
     void SetInverseMass( float fInvMass )               { m_fInverseMass = fInvMass; }
     void SetMass( float fMass )                         { m_fInverseMass = 1.0f / fMass; }
 

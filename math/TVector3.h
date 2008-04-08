@@ -64,6 +64,11 @@ public:
         return x()*rh.x() + y()*rh.y() + z()*rh.z();
     }
 
+    //! Returns the absolute values of the components
+    TVec Abs() const {
+        return TVec( abs((Type)x()), abs((Type)y()), abs((Type)z()) );
+    }
+
     //! Returns the cross product between two vectors
     inline TVec Cross( const TVec& ) const;
 

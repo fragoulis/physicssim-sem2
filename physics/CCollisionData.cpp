@@ -72,26 +72,24 @@ void CCollisionData::ResolveVelocity( float delta )
     // Find the amount of impulse per unit of inverse mass.
     const Vec3f vImpulsePerIMass = m_vContactNormal * fImpulse;
 
+    const Vec3f vFriction = ( 1.0f - m_vContactNormal.Abs() ) * m_fFriction;
+
     // Apply impulses: they are applied in the direction of the contact,
     // and are proportional to the inverse mass.
     m_Bodies[0]->SetVelocity( 
         m_Bodies[0]->GetVelocity() +
-        vImpulsePerIMass * m_Bodies[0]->GetInverseMass()
+        vImpulsePerIMass * m_Bodies[0]->GetInverseMass() - 
+        m_Bodies[0]->GetVelocity() * vFriction
     );
-
-    //Vec3f velocity = m_Bodies[0]->GetVelocity() * ( 1.0f - m_vContactNormal );
-    //m_Bodies[0]->AddForce( m_fFriction * ~velocity );
-
+    
     if( m_Bodies[1] )
     {
         // Particle 1 goes in the opposite direction.
         m_Bodies[1]->SetVelocity(
             m_Bodies[1]->GetVelocity() +
-            vImpulsePerIMass * -m_Bodies[1]->GetInverseMass()
+            vImpulsePerIMass * -m_Bodies[1]->GetInverseMass() + 
+            m_Bodies[0]->GetVelocity() * vFriction
         );
-
-        //velocity = m_Bodies[1]->GetVelocity() * ( 1.0f - m_vContactNormal );
-        //m_Bodies[1]->AddForce( m_fFriction * ~velocity );
     }
 } // end of ResolveVelocity()
 

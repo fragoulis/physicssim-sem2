@@ -38,7 +38,8 @@ public:
 
     //! Virtual destructor
     virtual ~IGOComponent() = 0 {}
-
+    
+    bool IsOwnerActive() const;
     CGameObject* GetOwner() const { return m_Owner; }
     void SetOwner( CGameObject* go ) 
     { 

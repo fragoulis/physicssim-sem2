@@ -40,7 +40,7 @@ private:
     //! The collidable box
     // This should normaly be a list of collidable boxes, but since we know
     // we are only going to use one box, there is not need for list here
-    IGOCBoundingVolume *m_Cloth;
+    IGOCBoundingVolume *m_Cloth, *m_Shelf;
 
     //! Physics' fixed time step
     float m_fTimeStep;
@@ -67,6 +67,10 @@ public:
     //! Initialize the class
     void Init();
 
+    //! Multiplies the default time step with a number
+    void MultTimeStep( float mul ) { m_fTimeStep *= mul; }
+    float GetTimeStep() const { return m_fTimeStep; }
+
 private:
     friend Singleton<CPhysicsManager>;
     CPhysicsManager();
@@ -83,6 +87,9 @@ private:
 
     //! Checks bodies for collisions 
     void CheckCollisions();
+
+    //! Single physics update cycle
+    void UpdateCycle( float delta );
 
 }; // end CPhysicsManager
 

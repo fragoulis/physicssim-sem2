@@ -21,6 +21,8 @@ GOCBoundingDeformable::~GOCBoundingDeformable()
 
 void GOCBoundingDeformable::Init()
 {
+    IGOCBoundingVolume::Init();
+
     m_Body = GET_GOC( IGOCPhysicsDeformable, "Physics" );
     assert(m_Body);
     

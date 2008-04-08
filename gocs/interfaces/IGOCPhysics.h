@@ -33,6 +33,7 @@ public:
 
     //! Override this function
     virtual void Update( float delta ) = 0;
+    virtual void UpdateOwner() {}
 
     const Vec3f& GetAcceleration() const { return m_vAcceleration; }
     Vec3f& GetAcceleration() { return m_vAcceleration; }

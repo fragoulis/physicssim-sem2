@@ -44,6 +44,7 @@ public:
     virtual ~IGOCPhysicsDeformable();
     virtual ComponentId_t GetID() const { return CHash::_("PhysicsDeformable"); }
     virtual void Update( float delta );
+    virtual void UpdateOwner();
     virtual void Init();
 
     CParticle* GetParticle( int index );

@@ -1,5 +1,3 @@
-#ifndef __TLIB_GOCS_GOCTVISUALIMQUAD_H__
-#define __TLIB_GOCS_GOCTVISUALIMQUAD_H__
 #pragma once
 #include "../Interfaces/IGOCTemplate.h"
 #include "../../Math/TVector2.h"
@@ -10,8 +8,6 @@ namespace tlib
 namespace gocs
 {
 
-class GOCVisualIMQuad;
-
 /**
  * @class GOCTVisualIMQuad
  * 
@@ -19,6 +15,9 @@ class GOCVisualIMQuad;
 class GOCTVisualIMQuad : public IGOCTemplate
 {
 private:
+    //! Double-sided plane flag
+    bool m_bDoublesided;
+
     //! The quads half size
     math::Vec2f m_vHalfSize; 
 
@@ -28,6 +27,9 @@ public:
     virtual ComponentId_t GetFamilyID() const {
         return CHash::_("Visual");
     }
+
+    bool IsDoublesided() const { return m_bDoublesided; }
+    void setDoublesided( bool ds ) { m_bDoublesided = ds; }
 
     const Vec2f& GetHalfSize() const { return m_vHalfSize; }
     void SetHalfSize( const Vec2f &hs ) { m_vHalfSize = hs; }
@@ -39,5 +41,3 @@ public:
 
 } // end namespace gocs
 } // end namespace tlib
-
-#endif // __TLIB_GOCS_GOCTVISUALIMQUAD_H__

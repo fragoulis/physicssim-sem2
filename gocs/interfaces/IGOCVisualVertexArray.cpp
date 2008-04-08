@@ -28,6 +28,8 @@ void IGOCVisualVertexArray::Init()
 
 void IGOCVisualVertexArray::Render() const
 {
+    if( !IsOwnerActive() ) return;
+
     // Enable client states
     glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glTexCoordPointer   (2, GL_FLOAT, 0, m_TexArray);

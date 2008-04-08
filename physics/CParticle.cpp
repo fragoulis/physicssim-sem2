@@ -1,15 +1,16 @@
-#include <assert.h>
 #include "CParticle.h"
+#include "../Util/assert.h"
 using namespace tlib::physics;
 
 // Gravity integration and small velocity damping by default
 CParticle::CParticle():
+m_vPosition(0.0f,0.0f,0.0f),
 m_vVelocity(0.0f, 0.0f, 0.0f),
 m_vForceAccum(0.0f, 0.0f, 0.0f),
 m_vAcceleration(0.0f, 0.0f, 0.0f),
 m_fInverseMass(0.0f)
 {
-    m_fDamping = 0.3f;
+    m_fDamping = 0.4f;
     m_fDrag = 0.2f;
 }
 
@@ -17,16 +18,14 @@ m_fInverseMass(0.0f)
 void CParticle::Integrate( float delta )
 {
     //TODO: Remove from update lists the static particles
-    //assert(delta>0.0f); ?????
-    if( m_fInverseMass <= 0.0f || delta <= 0.0f ) 
+    massert( delta>0.0f, "Delta time cannot be negative or zero" );
+    
+    if( m_fInverseMass > 0.0f ) 
     {
-        m_vForceAccum.Clear();
-        return;
+        IntegrateEuler( delta );
+        //IntegrateMidpoint( delta );
+        //IntegrateRK4( delta );
     }
-
-    IntegrateEuler( delta );
-    //IntegrateMidpoint( delta );
-    //IntegrateRK4( delta );
 
     m_vForceAccum.Clear();
 }
@@ -34,6 +33,9 @@ void CParticle::Integrate( float delta )
 // ----------------------------------------------------------------------------
 void CParticle::IntegrateEuler( float delta )
 {
+    // Update linear position
+    m_vPosition.AddScaledVector( m_vVelocity, delta );
+
     // Work out the acceleration from the force
     Vec3f vResultingAcc = m_vAcceleration;
     vResultingAcc.AddScaledVector( m_vForceAccum, m_fInverseMass );
@@ -43,10 +45,6 @@ void CParticle::IntegrateEuler( float delta )
 
     // Update linear velocity from the acceleration
     m_vVelocity.AddScaledVector( vResultingAcc, delta );
-
-    // Update linear position
-    m_vPosition.AddScaledVector( m_vVelocity, delta );
-    m_vPosition.AddScaledVector( vResultingAcc, 0.5f * delta * delta );
 
     // Velocity damping
     m_vVelocity *= powf( m_fDamping, delta );

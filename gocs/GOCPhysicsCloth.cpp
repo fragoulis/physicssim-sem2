@@ -9,6 +9,7 @@ using namespace tlib::gocs;
 using tlib::physics::CParticle;
 using tlib::physics::CSpringDamper;
 
+#include "../Util/Config.h"
 #include <cassert>
 
 GOCPhysicsCloth::GOCPhysicsCloth( const GOCTPhysicsCloth * const tpl ):
@@ -41,11 +42,22 @@ void GOCPhysicsCloth::Init()
 // ----------------------------------------------------------------------------
 void GOCPhysicsCloth::Setup()
 {
+    float Ks, Kd, damp, drag;
+
+    CFG_SERVER_OPEN;
+    CFG_LOAD("Spring_Attributes");
+    CFG_1f("spring", Ks);
+    CFG_1f("damper", Kd);
+
+    CFG_LOAD("Particle_Attributes");
+    CFG_1f("damp", damp);
+    CFG_1f("drag", drag);
+
     m_Particles = new CParticle[ m_iNumOfParticles ];
     m_Springs = new CSpringDamper[ m_iNumOfSprings ];
 
     // Get visual component
-    IGOCVisualVertexArray *va = GET_GOC( IGOCVisualVertexArray, "Visual" );
+    IGOCVisualVertexArray *va = m_Visual;
     assert(va);
 
     // Copy position for each particle as well as mass
@@ -75,6 +87,8 @@ void GOCPhysicsCloth::Setup()
             if( i<m_iStacks-1)
             {
                 int right = (i+1) + j*m_iStacks;
+                m_Springs[spring_cnt].SetKs(Ks);
+                m_Springs[spring_cnt].SetKd(Kd);
                 m_Springs[spring_cnt].SetRestLength(fRestLenX);
                 m_Springs[spring_cnt++].SetParticles( 
                     &m_Particles[index], 
@@ -85,12 +99,18 @@ void GOCPhysicsCloth::Setup()
             if( j<m_iSlices-1) 
             {
                 int bottom = i + (j+1)*m_iStacks;
+                m_Springs[spring_cnt].SetKs(Ks);
+                m_Springs[spring_cnt].SetKd(Kd);
                 m_Springs[spring_cnt].SetRestLength(fRestLenY);
                 m_Springs[spring_cnt++].SetParticles( 
                     &m_Particles[index], 
                     &m_Particles[bottom] 
                 );
             }
+
+            m_Particles[index].SetAcceleration( m_vAcceleration );
+            m_Particles[index].SetDamping(damp);
+            m_Particles[index].SetDrag(drag);
 
         } // for( ... i )
     } // for( ... j )
