@@ -28,10 +28,8 @@ private:
 
     // Rotating cube controls
     int m_iMouseX, m_iMouseY;
-    bool m_bIsMouseDown;
-    float m_fCubeHorizontalAngle, m_fCubeVerticalAngle;
     float m_fAccumX, m_fAccumY;
-    Quatf m_qRotationAccum;
+    bool m_bIsMouseDown;
 
     // General controls
     bool m_bWireframe;
@@ -63,11 +61,6 @@ public:
     void OnMouseMove( int x, int y );
 
 private:
-    void Reset();
-    void RotateCube( float delta );
-    void RotateCube( const Quatf &qCirRot );
-    void CheckRotationAngles();
-
     void SetupView() const;
     void RenderHelpGrid( int lines, float size ) const;
     void PrintStats();
