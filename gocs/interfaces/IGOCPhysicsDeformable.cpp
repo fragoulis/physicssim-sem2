@@ -66,9 +66,6 @@ void IGOCPhysicsDeformable::UpdateNormals()
             int index = i+j*m_iStacks;
             Vec3f u, v1, v2;
 
-            int bottom  = i+(j+1)*m_iStacks;
-            int top     = i+(j-1)*m_iStacks;
-
             // Pick the left vertex
             if( i > 0 ) v1.Set( m_Visual->GetVertex(index-1) );
             else v1.Set( m_Visual->GetVertex(index) );
