@@ -34,6 +34,7 @@ public:
 
     void Start( void *lpArgs = 0 );
     void Terminate();
+    void Stop() { m_bIsRunning = false; }
 
     //! Returns whether the thread is running
     bool IsRunning() const { return m_bIsRunning; }
