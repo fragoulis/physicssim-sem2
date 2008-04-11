@@ -19,13 +19,10 @@ using namespace tlib::gocs;
 #include <fstream>
 
 const float DEG_TO_RAD = (float)M_PI / 180.0f;
-const float ROTATION_STEP = 0.025f;
 const float ROTATION_SPEED = 350.0f;
 
 //-----------------------------------------------------------------------------
 MainWindow::MainWindow():
-m_fCubeHorizontalAngle(0.0f),
-m_fCubeVerticalAngle(0.0f),
 m_fAccumX(0.0f),
 m_fAccumY(0.0f),
 m_iMouseX(0),
@@ -64,8 +61,6 @@ void MainWindow::OnCreate()
     glEnable        (GL_DEPTH_TEST);
     glShadeModel    (GL_SMOOTH);
 
-    MGRScene::_Get().Init();
-    MGRPhysics::_Get().Init();
     Clock::_Get().Start( MGRTimeSrc::SRC_CLOCK );
     InputRec::_Get().Clear(m_RecData);
     InputReplay::_Get();
@@ -82,14 +77,12 @@ void MainWindow::OnCreate()
 
     LIGHT( 0, Vec3f( 0.0f, 0.0f, 0.4f ) );
 
-    //MainApp::GetPhysics().Start(); // Safely start the physics thread
+    MainApp::GetPhysics().Start(); // Safely start the physics thread
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnDisplay()
 {
-    Clock::Get().FrameStep();
-
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     SetupView();
     m_Camera.Apply();
@@ -105,28 +98,28 @@ void MainWindow::OnDisplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnIdle()
 {
-    float delta = (float)Clock::Get().GetTimeDelta();
+    //float delta = (float)Clock::Get().GetTimeDelta();
 
     // =========================================================================
-    if( m_AppState == AS_REPLAY )
-    {
-        HandleReplay();
-    }
+    //if( m_AppState == AS_REPLAY )
+    //{
+    //    HandleReplay();
+    //}
     // =========================================================================
 
-    if( !MainApp::Get().IsPaused() )
-    {
-        RotateCube( delta );
-        MGRPhysics::Get().Update( delta );
-    }
+    //if( !MainApp::Get().IsPaused() )
+    //{
+    //    RotateCube( delta );
+    //    MGRPhysics::Get().Update( delta );
+    //}
 
     // =========================================================================
-    if( m_AppState == AS_RECORD )
-    {
-        m_RecData.time = Clock::Get().GetCurrentFeed();
-        m_RecData.mouse = m_bIsMouseDown;
-        InputRec::Get().Record( m_RecData );
-    }
+    //if( m_AppState == AS_RECORD )
+    //{
+    //    m_RecData.time = Clock::Get().GetCurrentFeed();
+    //    m_RecData.mouse = m_bIsMouseDown;
+    //    InputRec::Get().Record( m_RecData );
+    //}
     // =========================================================================
 
     Redraw();
@@ -149,8 +142,10 @@ void MainWindow::HandleReplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnKeyboard( int key, bool down )
 {
-    if( down ) return;
     key = tolower(key);
+    MainApp::Get().SetKey( key, down );
+
+    if( down ) return;
 
     // Handle general input
     switch(key)
@@ -164,24 +159,6 @@ void MainWindow::OnKeyboard( int key, bool down )
                 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
             else 
                 glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-
-            //if( m_bTextured && !m_bWireframe )
-            //{
-            //    m_bTextured = false;
-            //    //glDisable( GL_TEXTURE_2D );
-            //}
-            //else if( !m_bTextured && !m_bWireframe )
-            //{
-            //    m_bWireframe = true;
-            //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-            //}
-            //else
-            //{
-            //    m_bTextured = true;
-            //    m_bWireframe = false;
-            //    //glEnable( GL_TEXTURE_2D );
-            //    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-            //}
         }
         break;
 
@@ -193,8 +170,8 @@ void MainWindow::OnKeyboard( int key, bool down )
         }
         break;
 
-    case 187: MGRPhysics::Get().MultTimeStep(2.0f); break; // '='
-    case 189: MGRPhysics::Get().MultTimeStep(0.5f); break; // '-'
+    //case 187: MGRPhysics::Get().MultTimeStep(2.0f); break; // '='
+    //case 189: MGRPhysics::Get().MultTimeStep(0.5f); break; // '-'
     }
 
     if( m_AppState == AS_NORMAL ) {
@@ -217,14 +194,14 @@ void MainWindow::KeyboardOnNormal( int key )
     {
         // Enable recording
         m_AppState = AS_RECORD;
-        Reset();
+        //Reset();
     }
     else if( key == 'o' )
     {   
         // Enable replay if recorded data exist
         if( !InputReplay::Get().Begin() ) return;
     
-        Reset();
+        //Reset();
         m_AppState = AS_REPLAY;
         Clock::Get().Start( MGRTimeSrc::SRC_FILE );
     }
@@ -270,31 +247,31 @@ void MainWindow::KeyboardOnReplay( int key )
 void MainWindow::CommonKeyboard( int key )
 {
     // Handles all controls except general and replay
-    switch(key)
-    {
-    case '0': Reset(); break;
-    case 'p': MainApp::Get().TogglePause(); break;
-    }
+    //switch(key)
+    //{
+    //case '0': Reset(); break;
+    //case 'p': MainApp::GetPhysics().TogglePause(); break;
+    //}
 
-    if( !MainApp::Get().IsPaused() )
-    {
-        switch(key)
-        {
-        case '1': 
-            {
-                if( RandBoolean() )
-                    MainApp::Get().AddBigSphere(); 
-                else
-                    MainApp::Get().AddSmallSphere(); 
-            }
-            break;
-        case '2': MainApp::Get().RemoveLastSphere(); break;
-        case '3': /* Toggle jelly */ break;
-        case 's': MainApp::Get().ToggleClothShelf(); break;
-        case 'v': /* Toggle video screen */ break;
-        case 'c': /* Toggle cameras */ break;
-        }
-    }
+    //if( !MainApp::GetPhysics().IsPaused() )
+    //{
+    //    switch(key)
+    //    {
+    //    case '1': 
+    //        {
+    //            if( RandBoolean() )
+    //                MainApp::Get().AddBigSphere(); 
+    //            else
+    //                MainApp::Get().AddSmallSphere(); 
+    //        }
+    //        break;
+    //    case '2': MainApp::Get().RemoveLastSphere(); break;
+    //    case '3': /* Toggle jelly */ break;
+    //    case 's': MainApp::Get().ToggleClothShelf(); break;
+    //    case 'v': /* Toggle video screen */ break;
+    //    case 'c': /* Toggle cameras */ break;
+    //    }
+    //}
 }
 
 //-----------------------------------------------------------------------------
@@ -312,6 +289,7 @@ void MainWindow::OnMouseButton( MouseButton button, bool down )
 void MainWindow::ActMouseButton( bool down )
 {
     m_bIsMouseDown = down;
+    MainApp::Get().SetMButton( down );
 }
 
 //-----------------------------------------------------------------------------
@@ -333,7 +311,7 @@ void MainWindow::OnMouseMove( int x, int y )
 //-----------------------------------------------------------------------------
 void MainWindow::ActMouseMove( int x, int y )
 {
-    // Zero values in reality are almost non-existen, so
+    // Zero values in reality are almost non-existent, so
     // we say zero values are not acceptable, which helps
     // us with the replay
     if( !x && !y ) return;
@@ -346,8 +324,10 @@ void MainWindow::ActMouseMove( int x, int y )
         const float pcX = float(m_fAccumX) / Width();
         const float pcY = -float(m_fAccumY) / Height();
 
-        m_fCubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
-        m_fCubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
+        float cubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
+        float cubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
+
+        MainApp::GetPhysics().SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
 
         m_fAccumX += dX;
         m_fAccumY += dY;
@@ -362,71 +342,13 @@ void MainWindow::ActMouseMove( int x, int y )
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::Reset()
-{
-    MainApp::Get().Reset();
-    RotateCube( ~m_qRotationAccum );
-    m_qRotationAccum.Clear();
-    
-    MainApp::Get().SetPause(false);
-    m_fCubeHorizontalAngle = 0.0f;
-    m_fCubeVerticalAngle = 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::RotateCube( float delta )
-{
-    if( m_fCubeHorizontalAngle == 0.0f &&
-        m_fCubeVerticalAngle == 0.0f ) 
-        return;
-
-    Quatf qHRot, qVRot;
-    qHRot.FromVector( m_fCubeHorizontalAngle * delta, Vec3f( 0.0f, 0.0f, 1.0f ) );
-    qVRot.FromVector( m_fCubeVerticalAngle * delta, Vec3f( 1.0f, 0.0f, 0.0f ) );
-    Quatf qCirRot = qVRot * qHRot;
-    
-    RotateCube( qCirRot );
-
-    m_qRotationAccum = qCirRot * m_qRotationAccum; // Accumulate rotation
-
-    CheckRotationAngles();
-
-} // RotateCube()
-
-//-----------------------------------------------------------------------------
-void MainWindow::RotateCube( const Quatf &qCirRot )
-{
-    MainApp::Get().RotatePlanes( qCirRot );
-    MainApp::Get().RotateCloth( qCirRot );
-    MainApp::Get().RotateShelf( qCirRot );
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::CheckRotationAngles()
-{
-    // Check cube rotation angles
-    if( m_fCubeHorizontalAngle > ROTATION_STEP )
-        m_fCubeHorizontalAngle -= ROTATION_STEP;
-    else if( m_fCubeHorizontalAngle <= -ROTATION_STEP )
-        m_fCubeHorizontalAngle += ROTATION_STEP;
-    else
-        m_fCubeHorizontalAngle = 0.0f;
-
-    if( m_fCubeVerticalAngle > ROTATION_STEP )
-        m_fCubeVerticalAngle -= ROTATION_STEP;
-    else if( m_fCubeVerticalAngle <= -ROTATION_STEP )
-        m_fCubeVerticalAngle += ROTATION_STEP;
-    else
-        m_fCubeVerticalAngle = 0.0f;
-}
-
-//-----------------------------------------------------------------------------
 void MainWindow::Quit()
 {
     if( m_AppState == AS_RECORD ) {
         InputRec::Get().End(); // Stop recoding
     }
 
+    MainApp::GetPhysics().Stop();
     Close();
 }
 
@@ -436,8 +358,6 @@ void MainWindow::OnDestroy()
     Clock::Destroy();
     InputRec::Destroy();
     InputReplay::Destroy();
-
-    //MainApp::GetPhysics().Terminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -468,7 +388,7 @@ void MainWindow::PrintStats()
     Printf( "TimeStep: %.4f", MGRPhysics::Get().GetTimeStep() );
 
     int smallspheres, bigspheres;
-    MainApp::Get().GetNumOfSpheres( smallspheres, bigspheres );
+    MainApp::GetPhysics().GetNumOfSpheres( smallspheres, bigspheres );
     glRasterPos2f( -1.0f, TEXT_Y );
     Printf( "Big spheres: %i", bigspheres );
     glRasterPos2f( -1.0f, TEXT_Y );
