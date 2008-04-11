@@ -1,5 +1,3 @@
-#ifndef __TLIB_CSCENEMANAGER_H__
-#define __TLIB_CSCENEMANAGER_H__
 #pragma once
 #include <vector>
 #include "Singleton.h"
@@ -54,5 +52,3 @@ public:
 typedef CSceneManager MGRScene;
 
 } // end namespace tlib
-
-#endif // __TLIB_CSCENEMANAGER_H__
