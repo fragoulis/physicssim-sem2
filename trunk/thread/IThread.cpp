@@ -38,7 +38,7 @@ void IThread::Start( void *lpArgs )
 // ----------------------------------------------------------------------------
 void IThread::Terminate()
 {
-    m_bIsRunning = false;
+    Stop();
 
     // Wait for it to stop
 	WaitForSingleObject( m_Handle, 5000 );
