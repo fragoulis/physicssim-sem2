@@ -1,5 +1,5 @@
 #pragma once
-#include "Thread/ISharedData.h"
+#include "Thread/CMutex.h"
 
 struct input_t
 {
@@ -10,17 +10,18 @@ struct input_t
 namespace tlib
 {
 
-class InputMap : public ISharedData
+class InputMap : public CMutex
 {
 public:
     InputMap();
     bool Get( input_t &data ) const;
-    bool Set( const input_t &data );
+    bool Clear();
 
     bool SetMButton( bool mbutton );
     bool SetKey( int index, bool state );
 
 private:
+    void _Clear();
     input_t m_data;
 };
 

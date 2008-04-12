@@ -3,6 +3,11 @@ using namespace tlib;
 
 InputMap::InputMap()
 {
+    _Clear();
+}
+
+void InputMap::_Clear() 
+{ 
     memset( &m_data, 0, sizeof(input_t) );
 }
 
@@ -10,10 +15,12 @@ bool InputMap::Get( input_t &data ) const
 {
     if( IsReadable() )
     {
-        __try { 
+        __TRY 
+        { 
            data = m_data;
         }
-        __finally {
+        __FINALLY 
+        {
             ReleaseWrite();
         }
 
@@ -24,14 +31,16 @@ bool InputMap::Get( input_t &data ) const
 }
 
 // ----------------------------------------------------------------------------
-bool InputMap::Set( const input_t &data )
+bool InputMap::Clear()
 {
     if( IsWritable() )
     {
-        __try { 
-           m_data = data;
+        __TRY 
+        { 
+            _Clear();
         }
-        __finally {
+        __FINALLY 
+        {
             ReleaseAll();
         }
 
