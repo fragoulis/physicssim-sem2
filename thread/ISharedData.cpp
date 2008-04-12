@@ -1,8 +1,8 @@
-#include "ISharedData.h"
+#include "CMutex.h"
 #include <cassert>
 using namespace tlib;
 
-ISharedData::ISharedData() 
+CMutex::CMutex() 
 {
 	m_mutex[READ] = CreateMutex( NULL, FALSE, "read_mutex" );
 	assert(m_mutex[READ]);
@@ -10,7 +10,7 @@ ISharedData::ISharedData()
     assert(m_mutex[WRITE]);
 }
 
-ISharedData::~ISharedData() 
+CMutex::~CMutex() 
 {
 	CloseHandle( m_mutex[READ] );
     CloseHandle( m_mutex[WRITE] );
