@@ -6,6 +6,7 @@
 #include "CMaterialManager.h"
 #include "CVertexArrayManager.h"
 #include "GOCS/CGameObject.h"
+#include "ObjectMutex.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
@@ -51,7 +52,11 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
     //    m_Cloth = pVisComp;
     //}
     
-    m_vVisuals.push_back( pVisComp );
+    if( m_mutex.IsWritable() )
+    {
+        __TRY { m_vVisuals.push_back( pVisComp ); }
+        __FINALLY { m_mutex.ReleaseAll(); }
+    }
 }
 
 #define FIND_AND_ERASE( list, obj ) \
@@ -79,7 +84,11 @@ void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
     //    m_Cloth = 0;
     //}
 
-    FIND_AND_ERASE(m_vVisuals, pVisComp);
+    if( m_mutex.IsWritable() )
+    {
+        __TRY { FIND_AND_ERASE(m_vVisuals, pVisComp); }
+        __FINALLY { m_mutex.ReleaseAll(); }
+    }
 }
 
 // ------------------------------------------------------------------------
@@ -99,7 +108,7 @@ void CSceneManager::Render() const
 
     // Apply material
     MGRMaterial::Get().Apply(MGRMaterial::METAL);
-            
+
     // Render cube walls
     // ------------------------------------------------------------------------
     //MGRVertexArray::Get().Begin("Walls");
@@ -111,11 +120,26 @@ void CSceneManager::Render() const
     
     // Render all balls
     // ------------------------------------------------------------------------
-    VisualArray_t::const_iterator i = m_vVisuals.begin();
-    for(; i != m_vVisuals.end(); ++i )
-    {   
-        IGOCVisual *v = *i;
-        v->Render();
+    
+    // To update the balls we must be sure that the physics thread is not 
+    // currently editing the visual component list or the positions of the 
+    // objects.
+    if( m_mutex.IsReadable() && ObjectMutex::IsReadable() )
+    {
+        __TRY 
+        { 
+            VisualList::const_iterator i = m_vVisuals.begin();
+            for(; i != m_vVisuals.end(); ++i )
+            {   
+                IGOCVisual *v = *i;
+                v->Render();
+            }
+        }
+        __FINALLY 
+        { 
+            m_mutex.ReleaseWrite(); 
+            ObjectMutex::ReleaseWrite();
+        }
     }
 
     // Render all jelly objects
