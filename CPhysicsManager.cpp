@@ -5,6 +5,7 @@
 #include "GOCS/GOCBoundingDeformable.h"
 #include "Util/CLogger.h"
 #include "Util/Config.h"
+#include "ObjectMutex.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::GOCBoundingDeformable;
@@ -27,7 +28,7 @@ CPhysicsManager::CPhysicsManager()
 
 void CPhysicsManager::Init()
 {
-    m_CollisionStack.Init(600);   
+    m_CollisionStack.Init(300);
 }
 
 
@@ -39,23 +40,26 @@ void CPhysicsManager::Update( float delta )
     }
 
     // Integration
-    if( delta > m_fTimeStep )
+    while( delta >= m_fTimeStep )
     {
-        while( delta >= m_fTimeStep )
-        {
-            UpdateCycle( m_fTimeStep );
-            delta -= m_fTimeStep;
-        }
-
-        if( delta > 0.0f )
-            UpdateCycle( delta );
+        UpdateCycle( m_fTimeStep );
+        delta -= m_fTimeStep;
     }
-    else
+
+    if( delta > 0.0f )
         UpdateCycle( delta );
 
-    BodyList::const_iterator i = m_Bodies.begin();
-    for(; i!= m_Bodies.end(); ++i )
-        (*i)->UpdateOwner();
+
+    if( ObjectMutex::IsWritable() )
+    {
+        __TRY
+        {
+            BodyList::const_iterator i = m_Bodies.begin();
+            for(; i!= m_Bodies.end(); ++i )
+                (*i)->UpdateOwner();
+        }
+        __FINALLY { ObjectMutex::ReleaseAll(); }
+    }
 }
 
 // ----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Singleton.h"
+#include "Thread/CMutex.h"
 
 namespace tlib
 {
@@ -22,10 +23,16 @@ class CSceneManager : public Singleton<CSceneManager>
 {
 private:
     //! The array of visual components
-    typedef std::vector<gocs::IGOCVisual*> VisualArray_t;
+    typedef std::vector<gocs::IGOCVisual*> VisualList;
+   
+    //! Mutex used to protect the list of visual components
+    //! from access errors
+    CMutex m_mutex;
     
-    VisualArray_t m_vVisuals;
-    VisualArray_t m_BigSpheres, m_SmallSpheres, m_Walls;
+    //! List of visual components
+    VisualList m_vVisuals;
+
+    //VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
     gocs::IGOCVisual* m_Cloth;
 
 private:
