@@ -86,8 +86,8 @@ void CCollisionData::ResolveVelocity( float delta )
     {
         // Particle 1 goes in the opposite direction.
         m_Bodies[1]->SetVelocity(
-            m_Bodies[1]->GetVelocity() +
-            vImpulsePerIMass * -m_Bodies[1]->GetInverseMass() + 
+            m_Bodies[1]->GetVelocity() -
+            vImpulsePerIMass * m_Bodies[1]->GetInverseMass() + 
             m_Bodies[0]->GetVelocity() * vFriction
         );
     }
