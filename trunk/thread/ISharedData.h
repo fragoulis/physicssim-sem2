@@ -1,6 +1,15 @@
 #pragma once
 #include <windows.h>
 
+//#define _USE_TRY_FINALLY
+#ifdef _USE_TRY_FINALLY
+#define __TRY __try
+#define __FINALLY __finally
+#else
+#define __TRY
+#define __FINALLY
+#endif
+
 namespace tlib
 {
 
@@ -11,7 +20,7 @@ const DWORD WAITING_TIME = 500L;
  * To use this, derive a class that contains the data you want and 
  * add the set/get functions as needed.
  */
-class ISharedData
+class CMutex
 {
 private:
     enum { READ, WRITE, COUNT };
@@ -19,8 +28,8 @@ private:
 	HANDLE m_mutex[COUNT];
 
 public:
-	ISharedData();
-    virtual ~ISharedData();
+	CMutex();
+    virtual ~CMutex();
 
     //! Acquiring a read state means that the we must wait for the writing
     //! mutex only
