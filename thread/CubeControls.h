@@ -1,5 +1,5 @@
 #pragma once
-#include "ISharedData.h"
+#include "CMutex.h"
 #include "../Math/TQuaternion.h"
 using tlib::math::Quatf;
 
@@ -9,7 +9,7 @@ namespace tlib
 /**
  * Shared memory container class that holds the two cube angles
  */
-class CubeAngles : public ISharedData
+class CubeAngles : public CMutex
 {
 public:
     bool Get( float &horizontal, float &vertical ) const;

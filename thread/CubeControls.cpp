@@ -8,11 +8,13 @@ bool CubeAngles::Get( float &horizontal, float &vertical ) const
 {
     if( IsReadable() )
     {
-        __try { 
+        __TRY 
+        { 
            horizontal = m_fHorizontal;
            vertical = m_fVertical;
         }
-        __finally {
+        __FINALLY 
+        {
             ReleaseWrite();
         }
 
@@ -26,11 +28,13 @@ bool CubeAngles::Set( float horizontal, float vertical )
 {
     if( IsWritable() )
     {
-        __try { 
+        __TRY 
+        { 
            m_fHorizontal = horizontal;
            m_fVertical = vertical;
         }
-        __finally {
+        __FINALLY 
+        {
             ReleaseAll();
         }
 
