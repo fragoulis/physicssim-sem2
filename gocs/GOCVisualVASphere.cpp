@@ -18,11 +18,11 @@ void GOCVisualVASphere::RenderObject() const
 {
     glPushMatrix();
     {
-        const Vec3f &vPos = GetOwner()->GetTransform().GetPosition();
+        const Vec3f &vPos = GetOwner()->GetPosition();
         glTranslatef( vPos.x(), vPos.y(), vPos.z() );
 
         //float m[16];
-        //const Quatf &vOri = GetOwner()->GetTransform().GetOrientation();
+        //const Quatf &vOri = GetOwner()->GetOrientation();
         //vOri.ToMatrix(m);
         //glMultMatrixf(m);
 
@@ -30,7 +30,7 @@ void GOCVisualVASphere::RenderObject() const
         glDrawElements(GL_TRIANGLE_FAN, m_iSlices+2, GL_UNSIGNED_INT, &m_IndexArray[0]);
         for (int i = 0; i < (m_iStacks-2); i++) { 
             glDrawElements(GL_TRIANGLE_STRIP, (m_iSlices+1)*2, GL_UNSIGNED_INT, &m_IndexArray[m_iSlices+2+i*(m_iSlices+1)*2]);
-        };
+        }
         glDrawElements(GL_TRIANGLE_FAN, m_iSlices+2, GL_UNSIGNED_INT, &m_IndexArray[m_iSlices+2+(m_iStacks-2)*(m_iSlices+1)*2]);
     }
     glPopMatrix();

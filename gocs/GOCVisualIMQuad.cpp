@@ -28,11 +28,11 @@ void GOCVisualIMQuad::Render() const
 
     glPushMatrix();
     {
-        const Vec3f &vPos = GetOwner()->GetTransform().GetPosition();
+        const Vec3f &vPos = GetOwner()->GetPosition();
         glTranslatef( vPos.x(), vPos.y(), vPos.z() );
 
         float m[16];
-        const Quatf &vOri = GetOwner()->GetTransform().GetOrientation();
+        const Quatf &vOri = GetOwner()->GetOrientation();
         vOri.ToMatrix(m);
         glMultMatrixf(m);
 

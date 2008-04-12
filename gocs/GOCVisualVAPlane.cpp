@@ -18,16 +18,17 @@ void GOCVisualVAPlane::RenderObject() const
 {
     glPushMatrix();
     {
-        //const Vec3f &vPos = GetOwner()->GetTransform().GetPosition();
+        //const Vec3f &vPos = GetOwner()->GetPosition();
         //glTranslatef( vPos.x(), vPos.y(), vPos.z() );
 
         //float m[16];
-        //const Quatf &vOri = GetOwner()->GetTransform().GetOrientation();
+        //const Quatf &vOri = GetOwner()->GetOrientation();
         //vOri.ToMatrix(m);
         //glMultMatrixf(m);
 
+        int totalIndices = (m_iStacks-1)*(m_iSlices-1)*6;
         glDisable(GL_CULL_FACE);
-        glDrawElements( GL_TRIANGLES, (m_iStacks-1)*(m_iSlices-1)*6, GL_UNSIGNED_INT, m_IndexArray );
+        glDrawElements( GL_TRIANGLES, totalIndices, GL_UNSIGNED_INT, m_IndexArray );
         glEnable(GL_CULL_FACE);
     }
     glPopMatrix();
@@ -50,8 +51,8 @@ bool GOCVisualVAPlane::Create()
     const float stack_inc = 1.0f/(float)(stacks-1);
     const float slice_inc = 1.0f/(float)(slices-1);
 
-    const Quatf &qOri = GetOwner()->GetTransform().GetOrientation();
-    const Vec3f &vPos = GetOwner()->GetTransform().GetPosition();
+    const Quatf &qOri = GetOwner()->GetOrientation();
+    const Vec3f &vPos = GetOwner()->GetPosition();
 
     const float sizeX = 2.0f * m_vHalfSize.x() * stack_inc;
     const float sizeY = 2.0f * m_vHalfSize.y() * slice_inc;
