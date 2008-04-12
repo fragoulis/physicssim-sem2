@@ -1,12 +1,8 @@
 #pragma once
 #pragma comment( lib, "glee" )
 #include "MainWindow.h"
-#include <vector>
-
-// The world object class
 #include "Thread/CPhysicsThread.h"
-
-using namespace tlib;
+#include <vector>
 
 class MainApp : public gxbase::App 
 {
@@ -26,7 +22,8 @@ public:
     // Accessors
     static MainApp& Get();
     static CPhysicsThread& GetPhysics() { return m_tPhysics; }
-    bool GetInput( input_t &data ) { return m_input.Get( data ); }
+    bool GetInput( input_t &data ) const { return m_input.Get( data ); }
+    bool ClearInput() { return m_input.Clear(); }
     bool SetMButton( bool down ) { return m_input.SetMButton( down ); }
     bool SetKey( int index, bool state ) { return m_input.SetKey( index, state ); }
 };

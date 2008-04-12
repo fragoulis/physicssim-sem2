@@ -61,7 +61,10 @@ void MainWindow::OnCreate()
     glEnable        (GL_DEPTH_TEST);
     glShadeModel    (GL_SMOOTH);
 
-    Clock::_Get().Start( MGRTimeSrc::SRC_CLOCK );
+    MGRScene::_Get().Init();
+    MGRPhysics::_Get().Init();
+    CGOCManager::_Get();
+
     InputRec::_Get().Clear(m_RecData);
     InputReplay::_Get();
 
@@ -98,38 +101,31 @@ void MainWindow::OnDisplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnIdle()
 {
-    //float delta = (float)Clock::Get().GetTimeDelta();
-
     // =========================================================================
-    //if( m_AppState == AS_REPLAY )
-    //{
-    //    HandleReplay();
-    //}
+    if( m_AppState == AS_REPLAY )
+    {
+        HandleReplay();
+    }
     // =========================================================================
-
-    //if( !MainApp::Get().IsPaused() )
-    //{
-    //    RotateCube( delta );
-    //    MGRPhysics::Get().Update( delta );
-    //}
-
+    else
     // =========================================================================
-    //if( m_AppState == AS_RECORD )
-    //{
-    //    m_RecData.time = Clock::Get().GetCurrentFeed();
-    //    m_RecData.mouse = m_bIsMouseDown;
-    //    InputRec::Get().Record( m_RecData );
-    //}
+    if( m_AppState == AS_RECORD )
+    {
+        m_RecData.time = Clock::Get().GetCurrentFeed();
+        m_RecData.mouse = m_bIsMouseDown;
+        InputRec::Get().Record( m_RecData );
+    }
     // =========================================================================
 
     Redraw();
 }
+
 //-----------------------------------------------------------------------------
 void MainWindow::HandleReplay()
 {
     if( !InputReplay::Get().Read( m_RecData ) )
     {
-        Clock::Get().Start( MGRTimeSrc::SRC_CLOCK );
+        RestartClock();
         m_AppState = AS_NORMAL;
         return;
     }
@@ -142,15 +138,13 @@ void MainWindow::HandleReplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnKeyboard( int key, bool down )
 {
-    key = tolower(key);
-    MainApp::Get().SetKey( key, down );
-
     if( down ) return;
+    key = tolower(key);
 
     // Handle general input
     switch(key)
     {
-    case 'q': Quit(); break;
+    case 'q': Close(); break;
     case 'z': m_bShowControls = !m_bShowControls; break;
     case 'w': 
         {
@@ -169,9 +163,6 @@ void MainWindow::OnKeyboard( int key, bool down )
                 SetFullscreen(true);
         }
         break;
-
-    //case 187: MGRPhysics::Get().MultTimeStep(2.0f); break; // '='
-    //case 189: MGRPhysics::Get().MultTimeStep(0.5f); break; // '-'
     }
 
     if( m_AppState == AS_NORMAL ) {
@@ -194,16 +185,16 @@ void MainWindow::KeyboardOnNormal( int key )
     {
         // Enable recording
         m_AppState = AS_RECORD;
-        //Reset();
+        Reset();
     }
     else if( key == 'o' )
     {   
         // Enable replay if recorded data exist
         if( !InputReplay::Get().Begin() ) return;
     
-        //Reset();
+        Reset();
         m_AppState = AS_REPLAY;
-        Clock::Get().Start( MGRTimeSrc::SRC_FILE );
+        RestartClockFromFile();
     }
     else
     {
@@ -238,7 +229,7 @@ void MainWindow::KeyboardOnReplay( int key )
     if( key == 'o' )
     {
         // Disable replay
-        Clock::Get().Start( MGRTimeSrc::SRC_CLOCK );
+        RestartClock();
         m_AppState = AS_NORMAL;
     }
 }
@@ -246,32 +237,7 @@ void MainWindow::KeyboardOnReplay( int key )
 //-----------------------------------------------------------------------------
 void MainWindow::CommonKeyboard( int key )
 {
-    // Handles all controls except general and replay
-    //switch(key)
-    //{
-    //case '0': Reset(); break;
-    //case 'p': MainApp::GetPhysics().TogglePause(); break;
-    //}
-
-    //if( !MainApp::GetPhysics().IsPaused() )
-    //{
-    //    switch(key)
-    //    {
-    //    case '1': 
-    //        {
-    //            if( RandBoolean() )
-    //                MainApp::Get().AddBigSphere(); 
-    //            else
-    //                MainApp::Get().AddSmallSphere(); 
-    //        }
-    //        break;
-    //    case '2': MainApp::Get().RemoveLastSphere(); break;
-    //    case '3': /* Toggle jelly */ break;
-    //    case 's': MainApp::Get().ToggleClothShelf(); break;
-    //    case 'v': /* Toggle video screen */ break;
-    //    case 'c': /* Toggle cameras */ break;
-    //    }
-    //}
+    MainApp::Get().SetKey( key, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -289,7 +255,7 @@ void MainWindow::OnMouseButton( MouseButton button, bool down )
 void MainWindow::ActMouseButton( bool down )
 {
     m_bIsMouseDown = down;
-    MainApp::Get().SetMButton( down );
+    //MainApp::Get().SetMButton( down );
 }
 
 //-----------------------------------------------------------------------------
@@ -324,10 +290,11 @@ void MainWindow::ActMouseMove( int x, int y )
         const float pcX = float(m_fAccumX) / Width();
         const float pcY = -float(m_fAccumY) / Height();
 
-        float cubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
-        float cubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
+        const float cubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
+        const float cubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
 
-        MainApp::GetPhysics().SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
+        MainApp::GetPhysics().
+            SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
 
         m_fAccumX += dX;
         m_fAccumY += dY;
@@ -342,22 +309,38 @@ void MainWindow::ActMouseMove( int x, int y )
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::Quit()
+void MainWindow::RestartClockFromFile()
 {
-    if( m_AppState == AS_RECORD ) {
-        InputRec::Get().End(); // Stop recoding
-    }
+    MainApp::GetPhysics().RestartClockFromFile();
+}
 
-    MainApp::GetPhysics().Stop();
-    Close();
+//-----------------------------------------------------------------------------
+void MainWindow::RestartClock()
+{
+    MainApp::GetPhysics().RestartClock();
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::Reset()
+{
+    MainApp::GetPhysics().SetReset();
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnDestroy()
 {
+    if( m_AppState == AS_RECORD ) {
+        InputRec::Get().End(); // Stop recoding
+    }
+
+    MainApp::GetPhysics().Terminate();
+
     Clock::Destroy();
     InputRec::Destroy();
     InputReplay::Destroy();
+    CGOCManager::Destroy();
+    MGRPhysics::Destroy();
+    MGRScene::Destroy();
 }
 
 //-----------------------------------------------------------------------------

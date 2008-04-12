@@ -5,6 +5,7 @@
 #include "../Util/CLogger.h"
 #include "../Util/Config.h"
 #include "../Math/Random.h"
+#include "../ObjectMutex.h"
 #include "../goc_includes.h"
 
 using namespace tlib::math;
@@ -12,26 +13,34 @@ using namespace tlib::time;
 
 CPhysicsThread::CPhysicsThread():
 m_bPause(false),
-m_bReset(false)
+m_bReset(false),
+m_bRestartClockFromFile(false),
+m_bRestartClock(false)
 {}
 
 //-----------------------------------------------------------------------------
 void CPhysicsThread::Run( void *lpArgs )
 {
+    Clock::_Get().Start( MGRTimeSrc::SRC_CLOCK );
+
     int i = 0;
     while(IsRunning())
     {
+        if( m_bRestartClockFromFile ) 
+        {
+            Clock::Get().Start( MGRTimeSrc::SRC_FILE );
+            m_bRestartClockFromFile = false;
+        }
+        else if( m_bRestartClock )
+        {
+            Clock::Get().Start( MGRTimeSrc::SRC_CLOCK );
+            m_bRestartClock = false;
+        }
+
         Clock::Get().FrameStep();
         float delta = (float)Clock::Get().GetTimeDelta();
 
         HandleInput();
-
-        // =========================================================================
-        //if( m_AppState == AS_REPLAY )
-        //{
-        //    HandleReplay();
-        //}
-        // =========================================================================
 
         if( m_bReset ) 
         {
@@ -45,16 +54,9 @@ void CPhysicsThread::Run( void *lpArgs )
             MGRPhysics::Get().Update( delta );
         }
 
-        // =========================================================================
-        //if( m_AppState == AS_RECORD )
-        //{
-        //    m_RecData.time = Clock::Get().GetCurrentFeed();
-        //    m_RecData.mouse = m_bIsMouseDown;
-        //    InputRec::Get().Record( m_RecData );
-        //}
-        // =========================================================================
+        Sleep(1);
     }
-}
+} // Run()
 
 #define DOWN( index ) m_input.keys[ index ]
 // ----------------------------------------------------------------------------
@@ -63,9 +65,11 @@ void CPhysicsThread::HandleInput()
     MainApp::Get().GetInput( m_input );
 
     // Handles all controls except general and replay
-    if( DOWN('0') ) Reset();
+    if( DOWN('0') ) m_bReset = true;
     if( DOWN('p') ) m_bPause = !m_bPause;
-    if( m_bPause )
+    if( DOWN(187) ) MGRPhysics::Get().MultTimeStep(2.0f); // '='
+    else if( DOWN(189) ) MGRPhysics::Get().MultTimeStep(0.5f); // '-'
+    if( !m_bPause )
     {
         if( DOWN('1') )
         {
@@ -79,6 +83,8 @@ void CPhysicsThread::HandleInput()
         if( DOWN('v') ) { /* Toggle video screen */ }
         if( DOWN('c') ) { /* Toggle cameras */ }
     }
+
+    MainApp::Get().ClearInput();
 }
 
 // ----------------------------------------------------------------------------
@@ -170,6 +176,7 @@ void CPhysicsThread::RotateCube( float delta )
     if( m_cube.horizontalAngle == 0.0f &&
         m_cube.verticalAngle == 0.0f ) 
         return;
+    //std::cerr << "Rotating " << m_cube.horizontalAngle << " -- " << m_cube.verticalAngle << std::endl;
 
     Quatf qHRot, qVRot;
     qHRot.FromVector( m_cube.horizontalAngle * delta, Vec3f( 0.0f, 0.0f, 1.0f ) );
@@ -194,8 +201,9 @@ void CPhysicsThread::RotateCube( const Quatf &qCirRot )
 // ----------------------------------------------------------------------------
 void CPhysicsThread::RotateCloth( const Quatf& qRot )
 {
-    Vec3f &vPos = m_Cloth->GetTransform().GetPosition();
+    Vec3f vPos = m_Cloth->GetPosition();
     qRot.Rotate( vPos );
+    m_Cloth->SetPosition( vPos );
 
     GOCPhysicsCloth *physics = GET_OBJ_GOC( m_Cloth, GOCPhysicsCloth, "Physics" );
     assert(physics);
@@ -213,12 +221,14 @@ void CPhysicsThread::RotateCloth( const Quatf& qRot )
 void CPhysicsThread::RotateShelf( const Quatf& qRot )
 {
     // Rotate plane
-    Vec3f &vPos = m_Shelf->GetTransform().GetPosition();
+    Vec3f vPos = m_Shelf->GetPosition();
     qRot.Rotate( vPos );
+    m_Shelf->SetPosition( vPos );
 
     // Add the rotation
-    Quatf &qOri = m_Shelf->GetTransform().GetOrientation();
+    Quatf qOri = m_Shelf->GetOrientation();
     qOri = qRot * qOri;
+    m_Shelf->SetOrientation( qOri );
 
     // Corrent normal
     GOCBoundingFinitePlane *bnd = GET_OBJ_GOC( m_Shelf, GOCBoundingFinitePlane, "BoundingVolume" );
@@ -246,12 +256,14 @@ void CPhysicsThread::RotatePlanes( const Quatf& qRot )
         CGameObject *plane = m_Planes[i];
         
         // Rotate plane
-        Vec3f &vPos = plane->GetTransform().GetPosition();
+        Vec3f vPos = plane->GetPosition();
         qRot.Rotate( vPos );
+        plane->SetPosition( vPos );
 
         // Add the rotation
-        Quatf &qOri = plane->GetTransform().GetOrientation();
+        Quatf qOri = plane->GetOrientation();
         qOri = qRot * qOri;
+        plane->SetOrientation( qOri );
 
         // Corrent normal
         GOCBoundingPlane *bnd = GET_OBJ_GOC( plane, GOCBoundingPlane, "BoundingVolume" );
@@ -275,15 +287,24 @@ void CPhysicsThread::ResetCube()
 // ----------------------------------------------------------------------------
 void CPhysicsThread::Reset()
 {
-    // Remove all spheres
-    ObjectList::iterator i = m_Spheres.begin();
-    for(; i != m_Spheres.end(); ++i )
+    if( ObjectMutex::IsWritable() )
     {
-        CGameObject *obj = *i;
-        delete obj;
-        obj = 0;
+        __TRY
+        {
+            // Remove all spheres
+            ObjectList::iterator i = m_Spheres.begin();
+            for(; i != m_Spheres.end(); ++i )
+            {
+                CGameObject *obj = *i;
+                delete obj;
+                obj = 0;
+            }
+            m_Spheres.clear();
+        }
+        __FINALLY { ObjectMutex::ReleaseAll(); }
     }
-    m_Spheres.clear();
+    else
+        return;
 
     m_iNumOfBigSpheres = 0;
     m_iNumOfSmallSpheres = 0;
@@ -397,6 +418,10 @@ void CPhysicsThread::InitTemplates()
     CFG_1i("Slices", slices);
     CFG_1f("Elasticity", elasticity);
     CFG_1f("Friction", friction);
+
+#ifdef _DEBUG
+    stacks = slices = 10;
+#endif
 
     GOCTVisualVAPlane *vaPlane = new GOCTVisualVAPlane("ClothVisualPlane");
     vaPlane->SetHalfSize( Vec2f( size ) );
