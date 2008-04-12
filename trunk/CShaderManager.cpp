@@ -1,5 +1,7 @@
-#include <GL/GLee.h>
 #include "CShaderManager.h"
+#include "Util/CLogger.h"
+#include "Util/assert.h"
+#include <GL/GLee.h>
 #include <cstdio>
 using namespace tlib;
 
@@ -46,10 +48,7 @@ void CShaderManager::Init()
     if( !addProgram( LIGHT_W_TEXTURE, 
                      "shaders/light_w_texture.vert", 
                      "shaders/light_w_texture.frag" ) ) {
-    }
-    if( !addProgram( LIGHT_W_TEXTURE_REFRACT, 
-                     "shaders/light_w_texture.vert", 
-                     "shaders/light_w_texture_refract.frag" ) ) {
+        fassert("LIGHT_W_TEXTURE shader failed to compile");
     }
 }
 
@@ -169,7 +168,7 @@ char* CShaderManager::loadSource( const char *filename )
     // allocate
     char *buff = new char[size+1];
     if( !buff ) {
-	    printf("LoadSource: failed to allocate %ld bytes\n", size);
+	    //printf("LoadSource: failed to allocate %ld bytes\n", size);
 	    fclose(fp);
 	    return NULL;
     }
@@ -197,8 +196,9 @@ int CShaderManager::getUniform( GLuint uiProg, const char *name )
     if( !uiProg || !name ) return 0;
 
     int i = glGetUniformLocation( uiProg, name );
-    /*if( i < 0 )
-        printf("GetUniform: uniform not found (%s)\n", name);*/
+    if( i < 0 ) {
+        std::cerr << "GetUniform: uniform not found " << std::string(name) << std::endl;
+    }
 
     return i;
 }
@@ -209,8 +209,10 @@ int CShaderManager::getUniform( const char *name )
     if( !m_uiActiveProg || !name ) return 0;
 
     int i = glGetUniformLocation( m_uiActiveProg, name );
-    /*if( i < 0 )
-        printf("GetUniform: uniform not found (%s)\n", name);*/
+    if( i < 0 )
+    {
+        std::cerr << "GetUniform: uniform not found " << std::string(name) << std::endl;
+    }
 
     return i;
 }
