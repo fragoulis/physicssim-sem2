@@ -23,7 +23,6 @@ void CPhysicsThread::Run( void *lpArgs )
 {
     Clock::_Get().Start( MGRTimeSrc::SRC_CLOCK );
 
-    int i = 0;
     while(IsRunning())
     {
         if( m_bRestartClockFromFile ) 
