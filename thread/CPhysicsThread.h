@@ -34,6 +34,8 @@ private:
 
     bool m_bPause;
     bool m_bReset;
+    bool m_bRestartClockFromFile;
+    bool m_bRestartClock;
     input_t m_input;
     CubeControls m_cube;
 
@@ -45,6 +47,8 @@ public:
     bool IsPaused() const { return m_bPause; }
     void TogglePause() { m_bPause = !m_bPause; }
     void SetReset() { m_bReset = true; }
+    void RestartClockFromFile() { m_bRestartClockFromFile = true; }
+    void RestartClock() { m_bRestartClock = true; }
 
     void SetCubeAngles( float horiz, float verti ) {
         m_cube.angles.Set( horiz, verti );

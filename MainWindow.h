@@ -53,7 +53,7 @@ public:
 	MainWindow();
 	void OnCreate();
 	void OnDisplay();
-	void OnIdle();
+    void OnIdle();
 	void OnResize( int w, int h );
     void OnDestroy();
 	void OnKeyboard( int key, bool down );
@@ -64,7 +64,7 @@ private:
     void SetupView() const;
     void RenderHelpGrid( int lines, float size ) const;
     void PrintStats();
-    void Quit();
+    void Reset();
 
     // Functions to handle input at the varius game states
     // [normal, recording, replay]
@@ -75,5 +75,7 @@ private:
     void ActMouseButton( bool down );
     void ActMouseMove( int x, int y );
 
+    void RestartClockFromFile();
+    void RestartClock();
     void HandleReplay();
 };
