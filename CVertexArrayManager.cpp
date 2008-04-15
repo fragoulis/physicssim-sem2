@@ -25,18 +25,20 @@ void CVertexArrayManager::Init()
     CFG_CLIENT_OPEN;
 
     // ------------------------------------------------------------------------
-    CFG_LOAD("Sphere");
+    CFG_LOAD("VisualSphere");
 
     CFG_1f("BigRadius", radius);
     CFG_1i("BigStacks", stacks);
     CFG_1i("BigSlices", slices);
     CVASphere *sphere = new CVASphere( "BigSphere", radius, stacks, slices );
+    sphere->Create(true);
     MAP_INSERT( m_Arrays, "BigSphere", sphere );
 
     CFG_1f("SmallRadius", radius);
     CFG_1i("SmallStacks", stacks);
     CFG_1i("SmallSlices", slices);
     sphere = new CVASphere( "SmallSphere", radius, stacks, slices );
+    sphere->Create(true);
     MAP_INSERT( m_Arrays, "SmallSphere", sphere );
 
     // ------------------------------------------------------------------------
@@ -48,6 +50,7 @@ void CVertexArrayManager::Init()
     CFG_1i("Slices", slices);
     
     CVAPlane *plane = new CVAPlane( "Wall", size, normal, stacks, slices );
+    plane->Create(true);
     MAP_INSERT( m_Arrays, "Wall", plane );
 
     // ------------------------------------------------------------------------
@@ -59,6 +62,7 @@ void CVertexArrayManager::Init()
     CFG_1i("Slices", slices);
 
     plane = new CVAPlane( "Cloth", size, normal, stacks, slices );
+    plane->Create(true);
     MAP_INSERT( m_Arrays, "Cloth", plane );
 }
 
@@ -67,19 +71,19 @@ void CVertexArrayManager::Begin( const VArrayId &key )
     // If there is another array currently active end it first
     if( m_Active ) End();
 
-    m_Arrays[ key ]->Begin();
-    m_Active = const_cast<VArrayId*>(&key);
+    m_Active = m_Arrays[ key ];
+    m_Active->Begin();
 }
 
 void CVertexArrayManager::Render()
 {
     assert(m_Active);
-    m_Arrays[ *m_Active ]->Render();
+    m_Active->Render();
 }
 
 void CVertexArrayManager::End()
 {
     assert(m_Active);
-    m_Arrays[ *m_Active ]->End();
+    m_Active->End();
     m_Active = 0;
 }

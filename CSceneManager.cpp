@@ -6,7 +6,6 @@
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
 #include "CVertexArrayManager.h"
-#include "Util/assert.h"
 #include "ObjectMutex.h"
 #include <algorithm>
 using namespace tlib;
@@ -185,33 +184,81 @@ void CSceneManager::Render() const
     {
         __TRY 
         { 
+            // ----------------------------------------------------------------
             // Render other walls
             uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            MGRVertexArray::Get().Begin("Wall");
             for( iter = m_Walls.begin(); iter != m_Walls.end(); ++iter )
-                (*iter)->Render();
+            {
+                float m[16];
+                const Quatf &vOri = (*iter)->GetOwner()->GetOrientation();
+                vOri.ToMatrix(m);
+                
+                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                glPushMatrix();
+                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                    glMultMatrixf(m);
+                    MGRVertexArray::Get().Render();
+                glPopMatrix();
+            }
+            MGRVertexArray::Get().End();
             
+            // ----------------------------------------------------------------
             // Render small spheres
             uiTextureId = MGRTexture::Get().GetTexture("images/fiberglass.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            MGRVertexArray::Get().Begin("SmallSphere");
             for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
-                (*iter)->Render();
+            {
+                //(*iter)->Render();
+                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                glPushMatrix();
+                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                    MGRVertexArray::Get().Render();
+                glPopMatrix();
+            }
+            MGRVertexArray::Get().End();
 
+            // ----------------------------------------------------------------
             // Render big spheres
             uiTextureId = MGRTexture::Get().GetTexture("images/bubbles-large.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            MGRVertexArray::Get().Begin("BigSphere");
             for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
-                (*iter)->Render();
+            {
+                //(*iter)->Render();
+                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                glPushMatrix();
+                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                    MGRVertexArray::Get().Render();
+                glPopMatrix();
+            }
+            MGRVertexArray::Get().End();
 
+            // ----------------------------------------------------------------
             // Render cloth || shelf
             uiTextureId = MGRTexture::Get().GetTexture("images/cloth.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
             m_Cloth->Render();
             m_Shelf->Render();
 
+            // ----------------------------------------------------------------
             // Render backplane
             glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
-            m_Backplane->Render();
+            MGRVertexArray::Get().Begin("Wall");
+            //m_Backplane->Render();
+            float m[16];
+            const Quatf &vOri = m_Backplane->GetOwner()->GetOrientation();
+            vOri.ToMatrix(m);
+            
+            const Vec3f &vPos = m_Backplane->GetOwner()->GetPosition();
+            glPushMatrix();
+                glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                glMultMatrixf(m);
+                MGRVertexArray::Get().Render();
+            glPopMatrix();
+            MGRVertexArray::Get().End();
         }
         __FINALLY 
         { 
@@ -219,36 +266,6 @@ void CSceneManager::Render() const
             ObjectMutex::ReleaseWrite();
         }
     } // if(  )
-
-    // Render cube walls
-    // ------------------------------------------------------------------------
-    //MGRVertexArray::Get().Begin("Walls");
-    //for( all walls ) do
-    ///* set position and orientation */
-    //MGRVertexArray::Get().Render();
-    //end for
-    //MGRVertexArray::End();
-    
-    // To update the balls we must be sure that the physics thread is not 
-    // currently editing the visual component list or the positions of the 
-    // objects.
-    //if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
-    //{
-    //    __TRY 
-    //    { 
-    //        VisualList::const_iterator i = m_vVisuals.begin();
-    //        for(; i != m_vVisuals.end(); ++i )
-    //        {   
-    //            IGOCVisual *v = *i;
-    //            v->Render();
-    //        }
-    //    }
-    //    __FINALLY 
-    //    { 
-    //        m_vizMutex.ReleaseWrite(); 
-    //        ObjectMutex::ReleaseWrite();
-    //    }
-    //}
 
     MGRShader::Get().end();
 }

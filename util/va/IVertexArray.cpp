@@ -12,7 +12,8 @@ m_iSlices(slices),
 m_Vertices(0),
 m_Normals(0),
 m_TexCoords(0),
-m_Indices(0)
+m_Indices(0),
+m_bIsTextured(true)
 {}
 
 IVertexArray::~IVertexArray()
