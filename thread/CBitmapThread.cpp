@@ -1,13 +1,23 @@
 #include "CBitmapThread.h"
-#include "../../GX/Image.h"
+#include "../CSceneManager.h"
+#include "../Util/Config.h"
+#include "../Util/tostring.h"
 
 //-----------------------------------------------------------------------------
 void CBitmapThread::Run( void *lpArgs )
 {
+    StringList::iterator image_iterator = m_images.begin();
     while(IsRunning())
     {
+        MGRScene::Get().LoadNewBackplaneTexture( (*image_iterator).c_str() );
 
-        Sleep(10);
+        // Advance iterator to use next image
+        ++image_iterator;
+        if( image_iterator == m_images.end() )
+            image_iterator = m_images.begin();
+
+        // Wait for a while ...
+        Sleep(m_sleep);
     }
 
 } // Run()
@@ -15,9 +25,24 @@ void CBitmapThread::Run( void *lpArgs )
 // ----------------------------------------------------------------------------
 void CBitmapThread::OnStart()
 {
-}
+    // Read the path of the images and the images' filenames
+    CFG_CLIENT_OPEN;
+    CFG_LOAD("Bitmap_Reader");
+    CFG_1i("Sleep", m_sleep);
 
-// ----------------------------------------------------------------------------
-void CBitmapThread::OnEnd()
-{
+    std::string path;
+    CFG_str("Path", path);
+
+    int number;
+    CFG_1i("Number", number);
+
+    m_images.resize(number);
+
+    for( int i=0; i<number; i++ )
+    {
+        std::string key = "Image"+toStr<int>(i+1), file;
+        CFG_str( key, file );
+
+        m_images[i] = path + file;
+    }
 }

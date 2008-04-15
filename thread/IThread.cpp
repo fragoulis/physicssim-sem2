@@ -68,12 +68,8 @@ void IThread::Toggle()
     else Resume();
 }
 
-void IThread::OnStart() { 
-    _LOG("Thread started!"); 
-}
+void IThread::OnStart() {}
 
-void IThread::OnEnd() { 
-    _LOG("Thread ended!");  
-}
+void IThread::OnEnd() {}
 
 } // end namespace tlib

@@ -1,13 +1,17 @@
 #pragma once
 #include "IThread.h"
+#include <string>
+#include <vector>
 using namespace tlib;
 
 class CBitmapThread : public IThread
 {
-protected:
-    virtual void Run( void *lpArgs );
+private:
+    typedef std::vector<std::string> StringList;
+    StringList m_images;
+    int m_sleep;
 
 private:
+    virtual void Run( void *lpArgs );
     virtual void OnStart();
-    virtual void OnEnd();
 };

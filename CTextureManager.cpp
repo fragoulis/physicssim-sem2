@@ -58,7 +58,7 @@ GLuint CTextureManager::LoadTexture( const std::string &sTexture )
     GLuint uiTexId;
     glGenTextures( 1, &uiTexId );
 
-    _LOG("Loaded texture "+ string(sTexture.c_str()) +"["+ toStr<GLuint>(uiTexId) +"]");
+    _LOG("Loaded texture "+ sTexture +"["+ toStr<GLuint>(uiTexId) +"]");
 
     // Generate mipmaps and free image from memory
     glBindTexture( GL_TEXTURE_2D, uiTexId );

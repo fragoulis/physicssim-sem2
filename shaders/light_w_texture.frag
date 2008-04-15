@@ -33,5 +33,6 @@ void main()
     const vec4 specular = gl_LightSource[0].specular * gl_FrontMaterial.specular * pow( max( 0.0, dot( R, V ) ), gl_FrontMaterial.shininess );
 
     // Final color includes fragment's colors and textures, self-emissions and global ambient
-    gl_FragColor = ( gl_FrontMaterial.emission + gl_LightModel.ambient + ambient + diffuse + specular ) * texture;
+    //gl_FragColor = ( gl_LightModel.ambient + ambient + diffuse ) * texture + specular * texture;
+    gl_FragColor = ( gl_LightModel.ambient + ambient + diffuse + specular ) * texture;
 }

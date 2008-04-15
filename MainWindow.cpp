@@ -80,6 +80,7 @@ void MainWindow::OnCreate()
 
     LIGHT( 0, Vec3f( 0.0f, 0.0f, 0.4f ) );
 
+    MainApp::GetBitmap().Start();
     MainApp::GetPhysics().Start(); // Safely start the physics thread
 }
 
@@ -334,6 +335,7 @@ void MainWindow::OnDestroy()
     }
 
     MainApp::GetPhysics().Terminate();
+    MainApp::GetBitmap().Terminate();
 
     Clock::Destroy();
     InputRec::Destroy();
