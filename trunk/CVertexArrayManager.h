@@ -21,7 +21,7 @@ private:
     VAList m_Arrays;
 
     //! Currently active array
-    VArrayId *m_Active;
+    util::IVertexArray* m_Active;
 
 public:
     void Init();
