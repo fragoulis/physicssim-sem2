@@ -2,14 +2,14 @@
 #include <vector>
 #include "Singleton.h"
 #include "Thread/CMutex.h"
+#include "../GX/Image.h"
+#include "Util/util_def.h"
+#include "../GX/Image.h"
 
 namespace tlib
 {
 
-namespace gocs
-{
-    class IGOCVisual;
-}
+PREDEF_1( gocs, IGOCVisual )
 
 /**
  * @class CSceneManager
@@ -27,7 +27,7 @@ private:
    
     //! Mutex used to protect the list of visual components
     //! from access errors
-    CMutex m_mutex;
+    CMutex m_vizMutex;
     
     //! List of visual components
     VisualList m_vVisuals;
@@ -35,10 +35,26 @@ private:
     //VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
     gocs::IGOCVisual* m_Cloth;
 
+    // The next variables are used to repeatedly load a new texture with
+    // the bitmap thread. They are mutable because the fuction that 
+    // generates the new thread is called from the Render() which is 
+    // constant.
+
+    //! Texture id for the back plane
+    mutable unsigned m_uiBackPlaneTexture;
+
+    //! The texture id
+    mutable gxbase::Image m_image;
+
+    //! Flag that will tell us if a new texture has been loaded
+    mutable bool m_bBackplaneChanged;
+
 private:
     friend Singleton<CSceneManager>;
     CSceneManager();
     ~CSceneManager();
+
+    void GenerateNewBackplaneTexture() const;
 
 public:
     //! Initialize scene manager
@@ -53,6 +69,9 @@ public:
 
     //! Removes a component from the array
     void Unregister( gocs::IGOCVisual *pVisComp );
+
+    //! Loads a new texture for the back plane
+    void LoadNewBackplaneTexture( const char *filename );
 
 }; // end CSceneManager
 

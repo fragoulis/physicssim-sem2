@@ -1,17 +1,21 @@
 #include <GL/GLee.h>
 #include "CSceneManager.h"
+#include "MainApp.h"
 #include "GOCS/Interfaces/IGOCVisual.h"
 #include "CShaderManager.h"
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
 #include "CVertexArrayManager.h"
-#include "GOCS/CGameObject.h"
+//#include "GOCS/CGameObject.h"
 #include "ObjectMutex.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
 
-CSceneManager::CSceneManager(): m_Cloth(0)
+CSceneManager::CSceneManager(): 
+m_Cloth(0), 
+m_uiBackPlaneTexture(0),
+m_bBackplaneChanged(false)
 {}
 
 // ------------------------------------------------------------------------
@@ -52,10 +56,10 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
     //    m_Cloth = pVisComp;
     //}
     
-    if( m_mutex.IsWritable() )
+    if( m_vizMutex.IsWritable() )
     {
         __TRY { m_vVisuals.push_back( pVisComp ); }
-        __FINALLY { m_mutex.ReleaseAll(); }
+        __FINALLY { m_vizMutex.ReleaseAll(); }
     }
 }
 
@@ -84,11 +88,52 @@ void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
     //    m_Cloth = 0;
     //}
 
-    if( m_mutex.IsWritable() )
+    if( m_vizMutex.IsWritable() )
     {
         __TRY { FIND_AND_ERASE(m_vVisuals, pVisComp); }
-        __FINALLY { m_mutex.ReleaseAll(); }
+        __FINALLY { m_vizMutex.ReleaseAll(); }
     }
+}
+
+// ------------------------------------------------------------------------
+void CSceneManager::GenerateNewBackplaneTexture() const
+{
+    if( !m_bBackplaneChanged ) return;
+
+    bool ret = m_image.glTexImage2D();
+    if( !ret ) {
+        m_image.Free();
+        return;
+    }
+
+    // Delete previous texture if there is one
+    if( m_uiBackPlaneTexture > 0 ) 
+        glDeleteTextures( 1, &m_uiBackPlaneTexture );
+
+    // Generate texture
+    glGenTextures( 1, &m_uiBackPlaneTexture );
+    assert(m_uiBackPlaneTexture);
+
+    glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    m_image.gluBuild2DMipmaps();
+
+    m_image.Free();
+
+    m_bBackplaneChanged = false;
+}
+
+// ------------------------------------------------------------------------
+void CSceneManager::LoadNewBackplaneTexture( const char *filename )
+{
+    bool ret = m_image.Load( filename );
+    if( !ret ) {
+        m_image.Free();
+        return;
+    }
+
+    m_bBackplaneChanged = true;
 }
 
 // ------------------------------------------------------------------------
@@ -101,8 +146,11 @@ void CSceneManager::Render() const
     // Enable shader
     MGRShader::Get().begin(MGRShader::LIGHT_W_TEXTURE);
 
+    GenerateNewBackplaneTexture();
+
     // Apply texture
-    GLuint uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+    //GLuint uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+    GLuint uiTextureId = m_uiBackPlaneTexture;
     glBindTexture( GL_TEXTURE_2D, uiTextureId );
     glUniform1i( MGRShader::Get().getUniform("colormap"), 0 );
 
@@ -124,7 +172,7 @@ void CSceneManager::Render() const
     // To update the balls we must be sure that the physics thread is not 
     // currently editing the visual component list or the positions of the 
     // objects.
-    if( m_mutex.IsReadable() && ObjectMutex::IsReadable() )
+    if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
     {
         __TRY 
         { 
@@ -137,7 +185,7 @@ void CSceneManager::Render() const
         }
         __FINALLY 
         { 
-            m_mutex.ReleaseWrite(); 
+            m_vizMutex.ReleaseWrite(); 
             ObjectMutex::ReleaseWrite();
         }
     }

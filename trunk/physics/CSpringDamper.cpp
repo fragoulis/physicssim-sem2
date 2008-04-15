@@ -31,14 +31,14 @@ void CSpringDamper::Compute()
     Vec3f vTotal = ( fSpring - fDamper ) * vNormal;
     //Vec3f vTotal = fSpring * vNormal;
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
     //massert( vTotal.Length()<10.0f, "Too big force!" );
-    const float force = vTotal.SqrLength();
-    if( force > FORCE_LIMIT )
-    {
-        vTotal *= 1.0f / force;
-    }
-#endif
+    //const float force = vTotal.SqrLength();
+    //if( force > FORCE_LIMIT )
+    //{
+    //    vTotal *= 1.0f / force;
+    //}
+//#endif
 
     // Apply to particles
     m_Particles[0]->AddForce( vTotal );

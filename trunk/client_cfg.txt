@@ -4,6 +4,16 @@ size 		768,768
 planes		0.1,10.0
 fullscreen 	0
 
+.Bitmap_Reader
+Sleep   2000
+Path    images/bitmap_reader/
+Number  5
+Image1  fiberglass.bmp
+Image2  ice-large.jpg
+Image3  water.jpg
+Image4  bubbles-large.jpg
+Image5  cloth.jpg
+
 .VisualSphere
 BigRadius   0.05
 BigStacks   15
@@ -39,7 +49,7 @@ Normal      0.0,0.0,1.0
 Mass        1.0
 Stacks      10
 Slices      10
-Elasticity  0.0
+Elasticity  0.1
 Friction    0.1
 
 .Shelf
