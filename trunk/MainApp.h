@@ -3,7 +3,6 @@
 #include "MainWindow.h"
 #include "Thread/CPhysicsThread.h"
 #include "Thread/CBitmapThread.h"
-#include <vector>
 
 class MainApp : public gxbase::App 
 {

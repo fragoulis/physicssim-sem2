@@ -30,10 +30,9 @@ private:
     CMutex m_vizMutex;
     
     //! List of visual components
-    VisualList m_vVisuals;
-
-    //VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
-    gocs::IGOCVisual* m_Cloth;
+    //VisualList m_vVisuals;
+    VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
+    gocs::IGOCVisual *m_Cloth, *m_Shelf, *m_Backplane;
 
     // The next variables are used to repeatedly load a new texture with
     // the bitmap thread. They are mutable because the fuction that 

@@ -32,7 +32,7 @@ public:
         return CHash::_("VisualIMQuad");
     }
 
-     bool IsDoublesided() const { return m_bDoublesided; }
+    bool IsDoublesided() const { return m_bDoublesided; }
     const Vec2f& GetHalfSize() const { return m_vHalfSize; }
 
     //! Renders the plane

@@ -6,14 +6,16 @@
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
 #include "CVertexArrayManager.h"
-//#include "GOCS/CGameObject.h"
+#include "Util/assert.h"
 #include "ObjectMutex.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
 
 CSceneManager::CSceneManager(): 
-m_Cloth(0), 
+m_Cloth(0),
+m_Backplane(0),
+m_Shelf(0),
 m_uiBackPlaneTexture(0),
 m_bBackplaneChanged(false)
 {}
@@ -39,29 +41,42 @@ void CSceneManager::Init()
 // ----------------------------------------------------------------------------
 void CSceneManager::Register( gocs::IGOCVisual *pVisComp ) 
 {
-    //if( pVisComp->GetOwner()->Is("BigSphere") )
-    //{
-    //    m_BigSpheres.push_back( pVisComp );
-    //}
-    //else if( pVisComp->GetOwner()->Is("SmallSphere") )
-    //{
-    //    m_SmallSpheres.push_back( pVisComp );
-    //}
-    //else if( pVisComp->GetOwner()->Is("Plane") )
-    //{
-    //    m_Walls.push_back( pVisComp );
-    //}
-    //else if( pVisComp->GetOwner()->Is("Cloth") )
-    //{
-    //    m_Cloth = pVisComp;
-    //}
-    
     if( m_vizMutex.IsWritable() )
     {
-        __TRY { m_vVisuals.push_back( pVisComp ); }
+        __TRY 
+        { 
+            if( pVisComp->GetOwner()->Is("BigSphere") ) {
+                m_BigSpheres.push_back( pVisComp );
+            }
+            else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
+                m_SmallSpheres.push_back( pVisComp );
+            }
+            else if( pVisComp->GetOwner()->Is("Plane") ) {
+                m_Walls.push_back( pVisComp );
+            }
+            else if( pVisComp->GetOwner()->Is("Backplane") ) {
+                m_Backplane = pVisComp;
+            }
+            else if( pVisComp->GetOwner()->Is("Cloth") ) {
+                m_Cloth = pVisComp;
+            }
+            else if( pVisComp->GetOwner()->Is("Shelf") ) {
+                m_Shelf = pVisComp;
+            }
+            else {
+                fassert("Adding a visual component with invalid object id");
+            }
+        }
         __FINALLY { m_vizMutex.ReleaseAll(); }
-    }
-}
+    } // if( )
+
+    //if( m_vizMutex.IsWritable() )
+    //{
+    //    __TRY { m_vVisuals.push_back( pVisComp ); }
+    //    __FINALLY { m_vizMutex.ReleaseAll(); }
+    //}
+
+} // Register()
 
 #define FIND_AND_ERASE( list, obj ) \
     list.erase( \
@@ -71,29 +86,42 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
 // ------------------------------------------------------------------------
 void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
 {
-    //if( pVisComp->GetOwner()->Is("BigSphere") )
-    //{
-    //    FIND_AND_ERASE(m_BigSpheres, pVisComp);
-    //}
-    //else if( pVisComp->GetOwner()->Is("SmallSphere") )
-    //{
-    //    FIND_AND_ERASE(m_SmallSpheres, pVisComp);
-    //}
-    //else if( pVisComp->GetOwner()->Is("Plane") )
-    //{
-    //    FIND_AND_ERASE(m_Walls, pVisComp);
-    //}
-    //else if( pVisComp->GetOwner()->Is("Cloth") )
-    //{
-    //    m_Cloth = 0;
-    //}
-
     if( m_vizMutex.IsWritable() )
     {
-        __TRY { FIND_AND_ERASE(m_vVisuals, pVisComp); }
+        __TRY 
+        { 
+            if( pVisComp->GetOwner()->Is("BigSphere") ) {
+                FIND_AND_ERASE(m_BigSpheres, pVisComp);
+            }
+            else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
+                FIND_AND_ERASE(m_SmallSpheres, pVisComp);
+            }
+            else if( pVisComp->GetOwner()->Is("Plane") ) {
+                FIND_AND_ERASE(m_Walls, pVisComp);
+            }
+            else if( pVisComp->GetOwner()->Is("Backplane") ) {
+                m_Backplane = 0;
+            }
+            else if( pVisComp->GetOwner()->Is("Cloth") ) {
+                m_Cloth = 0;
+            }
+            else if( pVisComp->GetOwner()->Is("Shelf") ) {
+                m_Shelf = 0;
+            }
+            else {
+                fassert("Removing a visual component with invalid object id");
+            }
+        }
         __FINALLY { m_vizMutex.ReleaseAll(); }
-    }
-}
+    } // if( )
+
+    //if( m_vizMutex.IsWritable() )
+    //{
+    //    __TRY { FIND_AND_ERASE(m_vVisuals, pVisComp); }
+    //    __FINALLY { m_vizMutex.ReleaseAll(); }
+    //}
+
+} // Unregister()
 
 // ------------------------------------------------------------------------
 void CSceneManager::GenerateNewBackplaneTexture() const
@@ -139,23 +167,55 @@ void CSceneManager::LoadNewBackplaneTexture( const char *filename )
 // ------------------------------------------------------------------------
 void CSceneManager::Render() const
 {
-    // For simplicity, all scene elements are rendered with 
-    // - per-pixel lighting
-    // - single texture
+    GenerateNewBackplaneTexture();
+
+    VisualList::const_iterator iter;    // visual component iterator
+    GLuint uiTextureId;                 // texture id
 
     // Enable shader
     MGRShader::Get().begin(MGRShader::LIGHT_W_TEXTURE);
-
-    GenerateNewBackplaneTexture();
-
-    // Apply texture
-    //GLuint uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
-    GLuint uiTextureId = m_uiBackPlaneTexture;
-    glBindTexture( GL_TEXTURE_2D, uiTextureId );
     glUniform1i( MGRShader::Get().getUniform("colormap"), 0 );
 
     // Apply material
     MGRMaterial::Get().Apply(MGRMaterial::METAL);
+
+    if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
+    {
+        __TRY 
+        { 
+            // Render backplane
+            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+            m_Backplane->Render();
+
+            // Render other walls
+            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            for( iter = m_Walls.begin(); iter != m_Walls.end(); ++iter )
+                (*iter)->Render();
+            
+            // Render small spheres
+            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
+                (*iter)->Render();
+
+            // Render big spheres
+            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
+            for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
+                (*iter)->Render();
+
+            // Render cloth || shelf
+            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+            m_Cloth->Render();
+            m_Shelf->Render();
+        }
+        __FINALLY 
+        { 
+            m_vizMutex.ReleaseWrite(); 
+            ObjectMutex::ReleaseWrite();
+        }
+    } // if(  )
 
     // Render cube walls
     // ------------------------------------------------------------------------
@@ -166,36 +226,26 @@ void CSceneManager::Render() const
     //end for
     //MGRVertexArray::End();
     
-    // Render all balls
-    // ------------------------------------------------------------------------
-    
     // To update the balls we must be sure that the physics thread is not 
     // currently editing the visual component list or the positions of the 
     // objects.
-    if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
-    {
-        __TRY 
-        { 
-            VisualList::const_iterator i = m_vVisuals.begin();
-            for(; i != m_vVisuals.end(); ++i )
-            {   
-                IGOCVisual *v = *i;
-                v->Render();
-            }
-        }
-        __FINALLY 
-        { 
-            m_vizMutex.ReleaseWrite(); 
-            ObjectMutex::ReleaseWrite();
-        }
-    }
-
-    // Render all jelly objects
-    // ------------------------------------------------------------------------
-
-    // Render cloth
-    // ------------------------------------------------------------------------
-    
+    //if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
+    //{
+    //    __TRY 
+    //    { 
+    //        VisualList::const_iterator i = m_vVisuals.begin();
+    //        for(; i != m_vVisuals.end(); ++i )
+    //        {   
+    //            IGOCVisual *v = *i;
+    //            v->Render();
+    //        }
+    //    }
+    //    __FINALLY 
+    //    { 
+    //        m_vizMutex.ReleaseWrite(); 
+    //        ObjectMutex::ReleaseWrite();
+    //    }
+    //}
 
     MGRShader::Get().end();
 }
