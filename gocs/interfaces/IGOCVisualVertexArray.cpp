@@ -23,6 +23,7 @@ IGOCVisualVertexArray::~IGOCVisualVertexArray()
 
 void IGOCVisualVertexArray::Init()
 {
+    IGOCVisual::Init();
     Create();
 }
 

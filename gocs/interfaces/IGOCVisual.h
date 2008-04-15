@@ -15,9 +15,6 @@ namespace gocs
 class IGOCVisual : public IGOComponent
 {
 public:
-    //! Constructor
-    IGOCVisual();
-
     //! Virtual destructor
     virtual ~IGOCVisual();
 
@@ -28,6 +25,7 @@ public:
 
     //! Override this function
     virtual void Render() const = 0;
+    virtual void Init();
 
 }; // end IGOCVisual
 

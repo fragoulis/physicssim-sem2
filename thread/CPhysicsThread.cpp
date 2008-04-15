@@ -125,22 +125,24 @@ void CPhysicsThread::ToggleClothShelf()
 // ----------------------------------------------------------------------------
 void CPhysicsThread::RemoveLastSphere()
 {
-    if( m_Spheres.size() )
-    {
-        // Get last element
-        CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
-        
-        if( el->Is("BigSphere") ) {
-            m_iNumOfBigSpheres--;
-        } else {
-            m_iNumOfSmallSpheres--;
-        }
+    if( !m_Spheres.size() ) return;
 
-        delete el;
-        el = 0;
-
-        m_Spheres.pop_back();
+    // Get last element
+    CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
+    
+    if( el->Is("BigSphere") ) {
+        m_iNumOfBigSpheres--;
+    } else {
+        m_iNumOfSmallSpheres--;
     }
+
+    if( ObjectMutex::IsWritable() )
+    {
+        __TRY { delete el; el = 0; }
+        __FINALLY { ObjectMutex::ReleaseAll(); }
+    }
+
+    m_Spheres.pop_back();
 }
 
 // ----------------------------------------------------------------------------
@@ -486,14 +488,14 @@ void CPhysicsThread::InitPlanes()
 
     // Back plane
     int iP = 0;
-    m_Planes[iP] = new CGameObject("BackPlane");
+    m_Planes[iP] = new CGameObject("Backplane");
     m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, -POSITION );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Left plane
     ++iP;
-    m_Planes[iP] = new CGameObject("LeftPlane");
+    m_Planes[iP] = new CGameObject("Plane");
     m_Planes[iP]->GetTransform().GetPosition().Set( -POSITION, 0.0f, 0.0f );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
@@ -501,7 +503,7 @@ void CPhysicsThread::InitPlanes()
 
     // Right plane
     ++iP;
-    m_Planes[iP] = new CGameObject("RightPlane");
+    m_Planes[iP] = new CGameObject("Plane");
     m_Planes[iP]->GetTransform().GetPosition().Set( POSITION, 0.0f, 0.0f );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
@@ -509,7 +511,7 @@ void CPhysicsThread::InitPlanes()
 
     // Top plane
     ++iP;
-    m_Planes[iP] = new CGameObject("TopPlane");
+    m_Planes[iP] = new CGameObject("Plane");
     m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, POSITION, 0.0f );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
@@ -517,7 +519,7 @@ void CPhysicsThread::InitPlanes()
 
     // Bottom plane
     ++iP;
-    m_Planes[iP] = new CGameObject("BottomPlane");
+    m_Planes[iP] = new CGameObject("Plane");
     m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, -POSITION, 0.0f );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
@@ -525,7 +527,7 @@ void CPhysicsThread::InitPlanes()
 
     // Front plane
     ++iP;
-    m_Planes[iP] = new CGameObject("FrontPlane");
+    m_Planes[iP] = new CGameObject("Plane");
     m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, POSITION );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI), Vec3f( 0.0f, 1.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
