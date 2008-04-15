@@ -30,9 +30,11 @@ private:
     CMutex m_vizMutex;
     
     //! List of visual components
-    //VisualList m_vVisuals;
     VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
     gocs::IGOCVisual *m_Cloth, *m_Shelf, *m_Backplane;
+
+    //! The scene is textured or not
+    bool m_bTextured;
 
     // The next variables are used to repeatedly load a new texture with
     // the bitmap thread. They are mutable because the fuction that 
@@ -56,6 +58,9 @@ private:
     void GenerateNewBackplaneTexture() const;
 
 public:
+    void ToggleTextured() { m_bTextured = !m_bTextured; }
+    bool IsTextured() const { return m_bTextured; }
+
     //! Initialize scene manager
     void Init();
 

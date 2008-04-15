@@ -149,11 +149,24 @@ void MainWindow::OnKeyboard( int key, bool down )
     case 'z': m_bShowControls = !m_bShowControls; break;
     case 'w': 
         {
-            m_bWireframe = !m_bWireframe;
-            if( m_bWireframe )
+            if( MGRScene::Get().IsTextured() && !m_bWireframe )
+            {
+                // Textured and solid -> solid
+                MGRScene::Get().ToggleTextured();
+            }
+            else if( !MGRScene::Get().IsTextured() && !m_bWireframe )
+            {
+                // Solid -> wireframe
                 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-            else 
+                m_bWireframe = true;
+            }
+            else
+            {
+                // Wireframe -> reset
+                MGRScene::Get().ToggleTextured();
                 glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+                m_bWireframe = false;
+            }
         }
         break;
 
