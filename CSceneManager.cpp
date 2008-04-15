@@ -17,6 +17,7 @@ m_Cloth(0),
 m_Backplane(0),
 m_Shelf(0),
 m_uiBackPlaneTexture(0),
+m_bTextured(true),
 m_bBackplaneChanged(false)
 {}
 
@@ -160,7 +161,7 @@ void CSceneManager::LoadNewBackplaneTexture( const char *filename )
         m_image.Free();
         return;
     }
-
+    
     m_bBackplaneChanged = true;
 }
 
@@ -175,6 +176,7 @@ void CSceneManager::Render() const
     // Enable shader
     MGRShader::Get().begin(MGRShader::LIGHT_W_TEXTURE);
     glUniform1i( MGRShader::Get().getUniform("colormap"), 0 );
+    glUniform1i( MGRShader::Get().getUniform("isTextured"), m_bTextured );
 
     // Apply material
     MGRMaterial::Get().Apply(MGRMaterial::METAL);
@@ -183,10 +185,6 @@ void CSceneManager::Render() const
     {
         __TRY 
         { 
-            // Render backplane
-            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
-            m_Backplane->Render();
-
             // Render other walls
             uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
@@ -194,21 +192,26 @@ void CSceneManager::Render() const
                 (*iter)->Render();
             
             // Render small spheres
-            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+            uiTextureId = MGRTexture::Get().GetTexture("images/fiberglass.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
             for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
                 (*iter)->Render();
 
             // Render big spheres
-            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+            uiTextureId = MGRTexture::Get().GetTexture("images/bubbles-large.jpg");
             glBindTexture( GL_TEXTURE_2D, uiTextureId );
             for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
                 (*iter)->Render();
 
             // Render cloth || shelf
-            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+            uiTextureId = MGRTexture::Get().GetTexture("images/cloth.jpg");
+            glBindTexture( GL_TEXTURE_2D, uiTextureId );
             m_Cloth->Render();
             m_Shelf->Render();
+
+            // Render backplane
+            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+            m_Backplane->Render();
         }
         __FINALLY 
         { 

@@ -3,6 +3,7 @@
  */
 
 uniform sampler2D colormap;
+uniform bool isTextured;
 
 varying vec3 vPos;
 varying vec3 vNormal;
@@ -16,9 +17,6 @@ void main()
     //const float att = 1.0 / gl_LightSource[0].constantAttenuation  + 
 	   //                     gl_LightSource[0].linearAttenuation    * dist + 
 	   //                     gl_LightSource[0].quadraticAttenuation * dist * dist;
-
-    // Fragment's texture color
-    const vec4 texture = texture2D( colormap, gl_TexCoord[0].st );
 
     // Light vectors
     const vec3 L = normalize( posDiff );
@@ -34,5 +32,10 @@ void main()
 
     // Final color includes fragment's colors and textures, self-emissions and global ambient
     //gl_FragColor = ( gl_LightModel.ambient + ambient + diffuse ) * texture + specular * texture;
-    gl_FragColor = ( gl_LightModel.ambient + ambient + diffuse + specular ) * texture;
+    gl_FragColor = ( gl_LightModel.ambient + ambient + diffuse + specular );
+
+    if( isTextured )
+    {
+        gl_FragColor *= texture2D( colormap, gl_TexCoord[0].st );
+    }
 }
