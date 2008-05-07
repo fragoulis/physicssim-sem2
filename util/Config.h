@@ -6,8 +6,8 @@
 #include <iostream>
 using namespace std;
 
-#define CFG_CLIENT_FILE         "client_cfg.txt"
-#define CFG_SERVER_FILE         "server_cfg.txt"
+#define CFG_CLIENT_FILE         "source/client_cfg.txt"
+#define CFG_SERVER_FILE         "source/server_cfg.txt"
 #define CFG_VAR                 __cfg
 #define CFG_OPEN(file)          tlib::util::Config CFG_VAR(file)
 #define CFG_CLIENT_OPEN         CFG_OPEN(CFG_CLIENT_FILE)

@@ -1,5 +1,5 @@
 #pragma once
-#include "../GX/GXBase.h"
+#include "../../GX/GXBase.h"
 #include "Util/CCamera.h"
 #include "Util/CLight.h"
 #include "Util/RecordData.h"

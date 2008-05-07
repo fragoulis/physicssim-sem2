@@ -21,7 +21,11 @@ void CBitmapThread::Run( void *lpArgs )
         }
 
         m_time++;
+#ifdef _DEBUG
+        Sleep(200);
+#else
         Sleep(m_sleep);
+#endif
     }
 
 } // Run()
