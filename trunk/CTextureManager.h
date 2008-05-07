@@ -2,7 +2,7 @@
 #include <map>
 #include <string>
 #include "Singleton.h"
-#include "../GX/Image.h"
+#include "../../GX/Image.h"
 using gxbase::Image;
 
 namespace tlib

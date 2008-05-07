@@ -51,7 +51,7 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
             else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
                 m_SmallSpheres.push_back( pVisComp );
             }
-            if( pVisComp->GetOwner()->Is("Plane") ) {
+            else if( pVisComp->GetOwner()->Is("Plane") ) {
                 m_Walls.push_back( pVisComp );
             }
             else if( pVisComp->GetOwner()->Is("Backplane") ) {
@@ -184,7 +184,7 @@ void CSceneManager::Render() const
                 { 
                     // ----------------------------------------------------------------
                     // Render small spheres
-                    uiTextureId = MGRTexture::Get().GetTexture("images/fiberglass.jpg");
+                    uiTextureId = MGRTexture::Get().GetTexture("source/images/fiberglass.jpg");
                     glBindTexture( GL_TEXTURE_2D, uiTextureId );
                     MGRVertexArray::Get().Begin("SmallSphere");
                     for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
@@ -199,7 +199,7 @@ void CSceneManager::Render() const
 
                     // ----------------------------------------------------------------
                     // Render big spheres
-                    uiTextureId = MGRTexture::Get().GetTexture("images/bubbles-large.jpg");
+                    uiTextureId = MGRTexture::Get().GetTexture("source/images/bubbles-large.jpg");
                     glBindTexture( GL_TEXTURE_2D, uiTextureId );
                     MGRVertexArray::Get().Begin("BigSphere");
                     for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
@@ -214,14 +214,14 @@ void CSceneManager::Render() const
 
                     // ----------------------------------------------------------------
                     // Render cloth || shelf
-                    uiTextureId = MGRTexture::Get().GetTexture("images/cloth.jpg");
+                    uiTextureId = MGRTexture::Get().GetTexture("source/images/cloth.jpg");
                     glBindTexture( GL_TEXTURE_2D, uiTextureId );
                     if(m_Cloth) m_Cloth->Render();
                     if(m_Shelf) m_Shelf->Render();
 
                     // ----------------------------------------------------------------
                     // Render other walls
-                    uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+                    uiTextureId = MGRTexture::Get().GetTexture("source/images/metal01-large.jpg");
                     glBindTexture( GL_TEXTURE_2D, uiTextureId );
                     MGRVertexArray::Get().Begin("Wall");
                     for( iter = m_Walls.begin(); iter != m_Walls.end(); ++iter )

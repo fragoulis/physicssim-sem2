@@ -7,7 +7,7 @@ fullscreen 	0
 .Bitmap_Reader
 ChangeInterval 10
 Sleep   50
-Path    images/bitmap_reader/
+Path    source/images/bitmap_reader/
 Number  7
 Image1  anim01.bmp
 Image2  anim02.bmp

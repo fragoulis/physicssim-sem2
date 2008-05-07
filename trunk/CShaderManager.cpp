@@ -46,8 +46,8 @@ void CShaderManager::end() {
 void CShaderManager::Init()
 {
     if( !addProgram( LIGHT_W_TEXTURE, 
-                     "shaders/light_w_texture.vert", 
-                     "shaders/light_w_texture.frag" ) ) {
+                     "source/shaders/light_w_texture.vert", 
+                     "source/shaders/light_w_texture.frag" ) ) {
         fassert("LIGHT_W_TEXTURE shader failed to compile");
     }
 }

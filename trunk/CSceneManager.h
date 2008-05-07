@@ -2,9 +2,9 @@
 #include <vector>
 #include "Singleton.h"
 #include "Thread/CMutex.h"
-#include "../GX/Image.h"
+#include "../../GX/Image.h"
 #include "Util/util_def.h"
-#include "../GX/Image.h"
+#include "../../GX/Image.h"
 
 namespace tlib
 {
