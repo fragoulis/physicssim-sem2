@@ -1,0 +1,12 @@
+.Physics_Attributes
+gravity		    -5.81
+timestep	    0.006
+collision_stack 1000
+
+.Spring_Attributes
+spring		200.0
+damper		0.3
+
+.Particle_Attributes
+damp        0.4
+drag        0.2
