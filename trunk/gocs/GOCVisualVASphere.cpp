@@ -9,9 +9,8 @@
 using namespace tlib::gocs;
 
 GOCVisualVASphere::GOCVisualVASphere( const GOCTVisualVASphere * const tpl ):
-m_fRadius(tpl->GetRadius()),
-m_iStacks(tpl->GetStacks()),
-m_iSlices(tpl->GetSlices())
+IGOCVisualVertexArray(tpl->GetStacks(), tpl->GetSlices()),
+m_fRadius(tpl->GetRadius())
 {}
 
 void GOCVisualVASphere::RenderObject() const 
@@ -39,6 +38,8 @@ void GOCVisualVASphere::RenderObject() const
 
 bool GOCVisualVASphere::Create()
 {
+    return true; // Code to be removed/altered
+
     int array_size;
     float stack_inc;
     float slice_inc;

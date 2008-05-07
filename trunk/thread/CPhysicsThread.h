@@ -27,6 +27,7 @@ private:
 
     // The game objects
     ObjectList   m_Spheres;
+    CGameObject *m_LastSphere;
     CGameObject *m_Planes[MAX_PLANES];
     CGameObject *m_Cloth;
     CGameObject *m_Shelf;
@@ -43,10 +44,11 @@ public:
     CPhysicsThread();
 
     // Pause controls
-    //void SetPause( bool p ) { m_bPause = p; }
     bool IsPaused() const { return m_bPause; }
     void TogglePause() { m_bPause = !m_bPause; }
     void SetReset() { m_bReset = true; }
+
+    // Record controls
     void RestartClockFromFile() { m_bRestartClockFromFile = true; }
     void RestartClock() { m_bRestartClock = true; }
 
@@ -59,6 +61,9 @@ public:
         ss = m_iNumOfSmallSpheres;
         bs = m_iNumOfBigSpheres;
     }
+
+    //! Returns the transformation of last sphere
+    CGameObject* GetLastSphere() { return m_LastSphere; }
 
 private:
     virtual void OnStart();

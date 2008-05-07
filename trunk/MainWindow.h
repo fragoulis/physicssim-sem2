@@ -20,7 +20,8 @@ private:
     float m_fFovY, m_fDimRatio, m_fPlanes[2];
 
     // Window's camera
-    CCamera m_Camera;
+    CCamera m_FrontCamera, m_BallCamera, *m_ActiveCam;
+    bool m_bBallCamActive;
 
     // Windorw's light
     static const int MAX_LIGHTS = 1;
@@ -78,4 +79,6 @@ private:
     void RestartClockFromFile();
     void RestartClock();
     void HandleReplay();
+
+    void UpdateActiveCamera();
 };

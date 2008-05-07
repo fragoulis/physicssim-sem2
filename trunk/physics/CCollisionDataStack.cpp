@@ -3,7 +3,8 @@ using namespace tlib::physics;
 
 CCollisionDataStack::CCollisionDataStack():
 m_iMaxCollisionsPerFrame(0),
-m_CollisionData(0)
+m_CollisionData(0),
+m_size(0)
 {}
 
 CCollisionDataStack::~CCollisionDataStack()
@@ -29,4 +30,5 @@ void CCollisionDataStack::ResolveCollisions( float delta )
         (*i)->Resolve( delta );
     }
     m_CollisionList.clear();
+    m_size = 0;
 }

@@ -47,8 +47,11 @@ private:
     //! The texture id
     mutable gxbase::Image m_image;
 
+    //! Backplane's texture mutex
+    mutable CMutex m_bpMutex;
+
     //! Flag that will tell us if a new texture has been loaded
-    mutable bool m_bBackplaneChanged;
+    mutable bool m_bLoaderActive;
 
 private:
     friend Singleton<CSceneManager>;
@@ -76,6 +79,7 @@ public:
 
     //! Loads a new texture for the back plane
     void LoadNewBackplaneTexture( const char *filename );
+    void ClearBackplaneTexture() const;
 
 }; // end CSceneManager
 

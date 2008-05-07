@@ -3,7 +3,7 @@
 #include "../Util/assert.h"
 using namespace tlib::physics;
 
-const float FORCE_LIMIT = 500.0f;
+const float FORCE_LIMIT = 1500.0f;
 
 CSpringDamper::CSpringDamper():
 m_Ks(100.0f),
@@ -33,11 +33,11 @@ void CSpringDamper::Compute()
 
 //#ifdef _DEBUG
     //massert( vTotal.Length()<10.0f, "Too big force!" );
-    //const float force = vTotal.SqrLength();
-    //if( force > FORCE_LIMIT )
-    //{
-    //    vTotal *= 1.0f / force;
-    //}
+    const float force = vTotal.SqrLength();
+    if( force > FORCE_LIMIT )
+    {
+        vTotal *= 1.0f / force;
+    }
 //#endif
 
     // Apply to particles

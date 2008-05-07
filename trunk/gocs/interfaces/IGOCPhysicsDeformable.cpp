@@ -33,13 +33,19 @@ void IGOCPhysicsDeformable::Update( float delta )
 {
     if( !IsOwnerActive() ) return;
 
-    // Update springs
-    for( int i=0; i<m_iNumOfSprings; ++i )
-        m_Springs[i].Compute();
+    const float step = 0.0002f;
+    while( delta >= step )
+    {
+        // Update springs
+        for( int i=0; i<m_iNumOfSprings; ++i )
+            m_Springs[i].Compute();
 
-    // Update particles
-    for( int i=0; i<m_iNumOfParticles; ++i )
-        m_Particles[i].Integrate(delta);
+        // Update particles
+        for( int i=0; i<m_iNumOfParticles; ++i )
+            m_Particles[i].Integrate(step);
+
+        delta -= step;
+    }
 
 } // Update()
 
@@ -49,10 +55,7 @@ void IGOCPhysicsDeformable::UpdateOwner()
 
     // Update vertices and normals
     for( int i=0; i<m_iNumOfParticles; ++i )
-    {    
-        // Update vertices along with integration
-        m_Visual->SetVertex( i, m_Particles[i].GetPosition().xyz() );
-    }
+        m_Visual->SetVertex( i, m_Particles[i].GetPosition() );
 
     UpdateNormals();
 }
@@ -91,7 +94,7 @@ void IGOCPhysicsDeformable::UpdateNormals()
             
             // Correct it
             v1.Normalize();
-            m_Visual->SetNormal( index, v1.xyz() );
+            m_Visual->SetNormal( index, v1 );
 
         } // end for( ... )
     } // end for( ... )

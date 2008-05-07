@@ -18,7 +18,6 @@ class GOCVisualVAPlane : public IGOCVisualVertexArray
 {
 private:
     Vec2f m_vHalfSize;
-    int m_iStacks, m_iSlices;
 
 public:
     //! Template based constructor

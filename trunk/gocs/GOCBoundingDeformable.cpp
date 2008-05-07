@@ -1,6 +1,7 @@
 #include "GOCBoundingDeformable.h"
 #include "Interfaces/IGOCTBounding.h"
 #include "Interfaces/IGOCPhysicsDeformable.h"
+#include "Interfaces/IGOCVisualVertexArray.h"
 #include "CGameObject.h"
 #include <cassert>
 using namespace tlib::gocs;
@@ -17,6 +18,7 @@ m_Primitive(0)
 GOCBoundingDeformable::~GOCBoundingDeformable()
 {
     delete m_Primitive;
+    m_Primitive = 0;
 }
 
 void GOCBoundingDeformable::Init()
@@ -26,6 +28,9 @@ void GOCBoundingDeformable::Init()
     m_Body = GET_GOC( IGOCPhysicsDeformable, "Physics" );
     assert(m_Body);
     
+    m_Visual = GET_GOC( IGOCVisualVertexArray, "Visual" );
+    assert(m_Visual);
+
     assert(m_Primitive);
     m_Primitive->SetOwner(GetOwner());
 }
