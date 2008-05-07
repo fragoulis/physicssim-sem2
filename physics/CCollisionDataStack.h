@@ -24,6 +24,9 @@ private:
     //! The list of potential collision couples
     CollisionDataList m_CollisionList;
 
+    //! List size cache
+    size_t m_size;
+
 public:
     CCollisionDataStack();
     ~CCollisionDataStack();
@@ -32,24 +35,25 @@ public:
     void Init( int iMaxCollisions );
 
     //! Retuns the number of free
-    int HaveSpots() { 
-        return int(m_iMaxCollisionsPerFrame-m_CollisionList.size()); 
-    }
+    int HaveSpots() { return int(m_iMaxCollisionsPerFrame-m_size); }
     
     //! Returns the next available collisions data address
     CCollisionData* GetFreeSpot() 
     { 
         if( HaveSpots() <= 0 ) return 0;
-        return &m_CollisionData[m_CollisionList.size()]; 
+        return &m_CollisionData[m_size]; 
     }
 
     //! Adds a collision
     void AddCollision( CCollisionData *col ) { 
-        m_CollisionList.push_back(col); 
+        m_CollisionList.push_back(col);
+        m_size++;
     }
 
     //! Resolves collisions between objects
     void ResolveCollisions( float delta );
+
+    size_t GetStackSize() const { return m_size; }
 };
 
 } // end namespace physics

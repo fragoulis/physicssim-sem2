@@ -28,9 +28,11 @@ m_fAccumY(0.0f),
 m_iMouseX(0),
 m_iMouseY(0),
 m_AppState(AS_NORMAL),
-m_bWireframe(0),
-m_bShowControls(0),
-m_bTextured(1)
+m_bWireframe(false),
+m_bShowControls(false),
+m_bBallCamActive(false),
+m_bTextured(true),
+m_ActiveCam(0)
 {
     // TODO: Read window stuff from config
     
@@ -69,19 +71,17 @@ void MainWindow::OnCreate()
     InputReplay::_Get();
 
     // Initialize camera's position and direction
-    m_Camera.SetPosition( Vec3f( 0.0f, 0.25f, 1.25f ) );
-    m_Camera.LookAt( Vec3f( 0.0f, 0.0f, 0.0f ) );
+    m_FrontCamera.SetPosition( Vec3f( 0.0f, 0.25f, 1.25f ) );
+    m_FrontCamera.LookAt( Vec3f( 0.0f, 0.0f, 0.0f ) );
+    m_ActiveCam = &m_FrontCamera;
 
     // Setup lighting
-#define LIGHT( index, vec ) \
-    m_Lights[index].SetId(index); \
-    m_Lights[index].SetPosition( vec ); \
-    m_Lights[index].TurnOn();
+    m_Lights[0].SetId(0);
+    m_Lights[0].SetPosition( Vec3f( 0.0f, 0.0f, 0.4f ) );
+    m_Lights[0].TurnOn();
 
-    LIGHT( 0, Vec3f( 0.0f, 0.0f, 0.4f ) );
-
-    MainApp::GetBitmap().Start();
     MainApp::GetPhysics().Start(); // Safely start the physics thread
+    MainApp::GetBitmap().Start();
 }
 
 //-----------------------------------------------------------------------------
@@ -89,7 +89,7 @@ void MainWindow::OnDisplay()
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     SetupView();
-    m_Camera.Apply();
+    UpdateActiveCamera();
     m_Lights[0].Apply();
 
     //RenderHelpGrid( 40, 0.5f );
@@ -252,6 +252,26 @@ void MainWindow::KeyboardOnReplay( int key )
 void MainWindow::CommonKeyboard( int key )
 {
     MainApp::Get().SetKey( key, true );
+
+    switch( key )
+    {
+    case 'v': 
+        {
+            MainApp::GetBitmap().Toggle(); 
+            MGRScene::Get().ClearBackplaneTexture();
+        }
+        break;
+
+    case 'c':
+        {
+            m_bBallCamActive = !m_bBallCamActive;
+            if( m_bBallCamActive )
+                m_ActiveCam = &m_BallCamera;
+            else
+                m_ActiveCam = &m_FrontCamera;
+        }
+        break;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -269,7 +289,6 @@ void MainWindow::OnMouseButton( MouseButton button, bool down )
 void MainWindow::ActMouseButton( bool down )
 {
     m_bIsMouseDown = down;
-    //MainApp::Get().SetMButton( down );
 }
 
 //-----------------------------------------------------------------------------
@@ -291,6 +310,9 @@ void MainWindow::OnMouseMove( int x, int y )
 //-----------------------------------------------------------------------------
 void MainWindow::ActMouseMove( int x, int y )
 {
+    // Dont act if camera follows a ball
+    if( m_bBallCamActive ) return;
+
     // Zero values in reality are almost non-existent, so
     // we say zero values are not acceptable, which helps
     // us with the replay
@@ -468,4 +490,35 @@ void MainWindow::RenderHelpGrid( int lines, float size ) const
         }
     }
     glEnd();
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::UpdateActiveCamera()
+{
+    if( m_bBallCamActive )
+    {
+        // Get last sphere trasformation data if exists
+        CGameObject *sphere = MainApp::GetPhysics().GetLastSphere();
+        if( !sphere ) {
+            // fallback
+            m_bBallCamActive = false;
+            m_ActiveCam = &m_FrontCamera;
+        }
+        else {
+            // Rotate view and up vector
+            Vec3f view  = m_BallCamera.GetView();
+            Vec3f up    = m_BallCamera.GetUp();
+
+            sphere->GetOrientation().Rotate( view );
+            sphere->GetOrientation().Rotate( up );
+
+            m_BallCamera.SetView( view );
+            m_BallCamera.SetUp( up );
+
+            // Set position
+            m_BallCamera.SetPosition( sphere->GetPosition() - 0.15f * view );
+        }
+    }
+
+    m_ActiveCam->Apply();
 }

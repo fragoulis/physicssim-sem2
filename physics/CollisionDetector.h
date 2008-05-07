@@ -31,7 +31,6 @@ public:
 
     static bool CheckPlaneParticle( IGOCBoundingVolume *a, CParticle *b, CCollisionData *data );
     static bool CheckSphereParticle( IGOCBoundingVolume *a, CParticle *b, CCollisionData *data );
-    static bool CheckParticleParticle( CParticle *a, CParticle *b, CCollisionData *data );
 
     // Simple primitive checks. No collision data.
     static bool CheckPrimitiveSphereBox( IGOCBoundingVolume *a, IGOCBoundingVolume *b );

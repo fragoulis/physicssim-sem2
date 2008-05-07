@@ -29,7 +29,8 @@ private:
     Vec2f m_vHalfSize;
 
     //! List of indices to the static points
-    int *m_Static, m_iNumOfStatics;
+    int *m_Static;
+    int m_iNumOfStaticPoints;
 
 public:
     GOCPhysicsCloth( const GOCTPhysicsCloth * const tpl );
@@ -42,8 +43,8 @@ public:
     virtual void Init();
     void Rotate( const Quatf &rot );
     
-    const Vec3f& GetStaticPos( int index );
-    int GetNumOfStatics() const { return m_iNumOfStatics; }
+    const Vec3f& GetStaticPointPosition( int index );
+    int GetNumOfStaticPoints() const { return m_iNumOfStaticPoints; }
 
 private:
     //! Sets up the particles and springs

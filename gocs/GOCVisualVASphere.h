@@ -17,7 +17,6 @@ class GOCVisualVASphere : public IGOCVisualVertexArray
 private:
     // The sphere's radius, stacks and slices
     float m_fRadius; 
-    int m_iStacks, m_iSlices;
 
 public:
     //! Template based constructor

@@ -1,18 +1,21 @@
 .Window_Attributes
 fov 		80.0
 size 		768,768
-planes		0.1,10.0
+planes		0.01,10.0
 fullscreen 	0
 
 .Bitmap_Reader
-Sleep   2000
+ChangeInterval 10
+Sleep   50
 Path    images/bitmap_reader/
-Number  5
-Image1  fiberglass.bmp
-Image2  ice-large.jpg
-Image3  water.jpg
-Image4  bubbles-large.jpg
-Image5  cloth.jpg
+Number  7
+Image1  anim01.bmp
+Image2  anim02.bmp
+Image3  anim03.bmp
+Image4  anim04.bmp
+Image5  anim05.bmp
+Image6  anim06.bmp
+Image7  anim07.bmp
 
 .VisualSphere
 BigRadius   0.05
@@ -28,10 +31,10 @@ SmallMass   0.25
 
 .BoundingSphere
 BigRadius       0.05
-BigElasticity   0.8
+BigElasticity   0.9
 BigFriction     0.0
 SmallRadius     0.02
-SmallElasticity 0.9
+SmallElasticity 0.95
 SmallFriction   0.0
 
 .Plane
@@ -39,18 +42,18 @@ Halfsize    0.5,0.5
 Normal      0.0,0.0,1.0
 Stacks      2
 Slices      2
-Elasticity  0.9
-Friction    0.01
+Elasticity  0.95
+Friction    0.005
 
 .Cloth
 Halfsize    0.25,0.5
 BoundingBox 0.25,0.5,0.5
 Normal      0.0,0.0,1.0
-Mass        1.0
+Mass        10.0
 Stacks      10
 Slices      10
 Elasticity  0.1
-Friction    0.1
+Friction    0.005
 
 .Shelf
 Halfsize    0.25,0.5

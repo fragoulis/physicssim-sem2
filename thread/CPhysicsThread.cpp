@@ -15,7 +15,8 @@ CPhysicsThread::CPhysicsThread():
 m_bPause(false),
 m_bReset(false),
 m_bRestartClockFromFile(false),
-m_bRestartClock(false)
+m_bRestartClock(false),
+m_LastSphere(0)
 {}
 
 //-----------------------------------------------------------------------------
@@ -79,8 +80,6 @@ void CPhysicsThread::HandleInput()
         else if( DOWN('2') ) RemoveLastSphere();
         if( DOWN('3') ) { /* Toggle jelly */ }
         if( DOWN('s') ) ToggleClothShelf();
-        if( DOWN('v') ) { /* Toggle video screen */ }
-        if( DOWN('c') ) { /* Toggle cameras */ }
     }
 
     MainApp::Get().ClearInput();
@@ -96,6 +95,12 @@ void CPhysicsThread::OnStart()
     InitPlanes();
     InitCloth();
     InitShelf();
+
+    for( int i=0; i<0; i++ )
+    {
+        AddBigSphere();
+        AddSmallSphere();
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -125,12 +130,9 @@ void CPhysicsThread::ToggleClothShelf()
 // ----------------------------------------------------------------------------
 void CPhysicsThread::RemoveLastSphere()
 {
-    if( !m_Spheres.size() ) return;
-
-    // Get last element
-    CGameObject *el = m_Spheres[ m_Spheres.size() - 1 ];
+    if( !m_LastSphere ) return;
     
-    if( el->Is("BigSphere") ) {
+    if( m_LastSphere->Is("BigSphere") ) {
         m_iNumOfBigSpheres--;
     } else {
         m_iNumOfSmallSpheres--;
@@ -138,11 +140,16 @@ void CPhysicsThread::RemoveLastSphere()
 
     if( ObjectMutex::IsWritable() )
     {
-        __TRY { delete el; el = 0; }
+        __TRY { delete m_LastSphere; m_LastSphere = 0; }
         __FINALLY { ObjectMutex::ReleaseAll(); }
     }
 
     m_Spheres.pop_back();
+
+    // Get last element
+    if( !m_Spheres.size() ) return;
+
+    m_LastSphere = m_Spheres[ m_Spheres.size() - 1 ];
 }
 
 // ----------------------------------------------------------------------------
@@ -160,6 +167,8 @@ void CPhysicsThread::AddBigSphere()
 
     m_Spheres.push_back(pSphere);
     m_iNumOfBigSpheres++;
+
+    m_LastSphere = pSphere;
 }
 
 // ----------------------------------------------------------------------------
@@ -176,6 +185,8 @@ void CPhysicsThread::AddSmallSphere()
 
     m_Spheres.push_back(pSphere);
     m_iNumOfSmallSpheres++;
+
+    m_LastSphere = pSphere;
 }
 
 //-----------------------------------------------------------------------------
@@ -219,12 +230,9 @@ void CPhysicsThread::RotateCloth( const Quatf& qRot )
     assert(physics);
     physics->Rotate(qRot);
 
-    //GOCBoundingDWBox *bnd = GET_OBJ_GOC( m_Cloth, GOCBoundingDWBox, "BoundingVolume" );
-    //assert(bnd);
-    //GOCBoundingBox *bbox = (GOCBoundingBox*)bnd->GetPrimitive();
-    //Vec3f hs = bbox->GetHalfSize();
-    //qRot.Rotate(hs);
-    //bbox->SetHalfSize(hs);
+    GOCBoundingDWBox *bnd = GET_OBJ_GOC( m_Cloth, GOCBoundingDWBox, "BoundingVolume" );
+    assert(bnd);
+    bnd->WrapObject();
 }
 
 // ----------------------------------------------------------------------------
@@ -555,7 +563,7 @@ void CPhysicsThread::InitShelf()
 
     m_Shelf = new CGameObject("Shelf");
     m_Shelf->Deactivate();
-    m_Shelf->GetTransform().GetPosition().Set( -0.25f, -0.2f, 0.0f );
+    m_Shelf->GetTransform().GetPosition().Set( -0.25f, 0.0f, 0.0f );
     m_Shelf->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
     ADD_GOC( m_Shelf, "VisualShelf" );
     ADD_GOC( m_Shelf, "DoubleSidePlane" );

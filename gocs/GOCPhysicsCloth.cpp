@@ -74,13 +74,9 @@ void GOCPhysicsCloth::Setup()
         {
             int index = i+j*m_iStacks;
 
-            m_Particles[index].SetPosition( Vec3f( 
-                va->GetVertex(index)[0], 
-                va->GetVertex(index)[1], 
-                va->GetVertex(index)[2] 
-            ) 
-            );
-
+            Vec3f dummy;
+            va->GetVertex(index, dummy);
+            m_Particles[index].SetPosition( dummy );
             m_Particles[index].SetInverseMass( fIMass );
 
             // Setup springs
@@ -123,8 +119,32 @@ void GOCPhysicsCloth::Setup()
 void GOCPhysicsCloth::SetupStaticPoints()
 {
     // TODO: These are to be read from file
-    m_iNumOfStatics = 9;
-    m_Static = new int[m_iNumOfStatics];
+    //m_iNumOfStaticPoints = 13;
+    //m_Static = new int[m_iNumOfStaticPoints];
+
+    //// Manually set the mass of the static points to zero
+    //// [here the four corners]
+    //const int points[] =
+    //{
+    //    0,
+    //    m_iStacks/2,
+    //    m_iStacks-1,
+
+    //    m_iStacks*(m_iSlices-m_iSlices/8),
+    //    m_iStacks*(m_iSlices-m_iSlices/4),
+    //    m_iStacks*(m_iSlices-3*m_iSlices/8),
+    //    m_iStacks*(m_iSlices-m_iSlices/2),
+    //    m_iStacks*(m_iSlices-5*m_iSlices/8),
+    //    m_iStacks*(m_iSlices-3*m_iSlices/4),
+    //    m_iStacks*(m_iSlices-7*m_iSlices/8),
+
+    //    m_iStacks*(m_iSlices-1),
+    //    m_iStacks*m_iSlices-m_iStacks/2,
+    //    m_iStacks*m_iSlices-1
+    //};
+
+    m_iNumOfStaticPoints = 9;
+    m_Static = new int[m_iNumOfStaticPoints];
 
     // Manually set the mass of the static points to zero
     // [here the four corners]
@@ -143,7 +163,7 @@ void GOCPhysicsCloth::SetupStaticPoints()
         m_iStacks*m_iSlices-1
     };
 
-    for( int i=0; i<m_iNumOfStatics; ++i )
+    for( int i=0; i<m_iNumOfStaticPoints; ++i )
     {
         m_Static[i] = points[i];
         assert(m_Static[i]<m_iNumOfParticles);
@@ -154,15 +174,15 @@ void GOCPhysicsCloth::SetupStaticPoints()
 // ----------------------------------------------------------------------------
 void GOCPhysicsCloth::Rotate( const Quatf &rot )
 {
-    for( int i=0; i<m_iNumOfStatics; ++i )
+    for( int i=0; i<m_iNumOfStaticPoints; ++i )
     {
         rot.Rotate( m_Particles[m_Static[i]].GetPosition() );
     }
 }
 
 // ----------------------------------------------------------------------------
-const Vec3f& GOCPhysicsCloth::GetStaticPos( int index )
+const Vec3f& GOCPhysicsCloth::GetStaticPointPosition( int index )
 {
-    assert(index<m_iNumOfStatics);
+    assert(index<m_iNumOfStaticPoints);
     return m_Particles[m_Static[index]].GetPosition();
 }

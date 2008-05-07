@@ -14,6 +14,7 @@ namespace gocs
 {
     class IGOCTBounding;
     class IGOCPhysicsDeformable;
+    class IGOCVisualVertexArray;
 
 /**
  * @class GOCBoundingDeformable
@@ -27,6 +28,9 @@ protected:
 
     //! Direct access pointer to physical component
     IGOCPhysicsDeformable *m_Body;
+
+    //! The visual representation of the deformable
+    IGOCVisualVertexArray *m_Visual;
 
 private:
     int m_iParticleIndex;

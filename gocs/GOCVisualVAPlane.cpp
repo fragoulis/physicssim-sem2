@@ -9,9 +9,8 @@
 using namespace tlib::gocs;
 
 GOCVisualVAPlane::GOCVisualVAPlane( const GOCTVisualVAPlane * const tpl ):
-m_vHalfSize(tpl->GetHalfSize()),
-m_iStacks(tpl->GetStacks()),
-m_iSlices(tpl->GetSlices())
+IGOCVisualVertexArray(tpl->GetStacks(), tpl->GetSlices()),
+m_vHalfSize(tpl->GetHalfSize())
 {}
 
 void GOCVisualVAPlane::RenderObject() const 
@@ -26,9 +25,8 @@ void GOCVisualVAPlane::RenderObject() const
         //vOri.ToMatrix(m);
         //glMultMatrixf(m);
 
-        int totalIndices = (m_iStacks-1)*(m_iSlices-1)*6;
         glDisable(GL_CULL_FACE);
-        glDrawElements( GL_TRIANGLES, totalIndices, GL_UNSIGNED_INT, m_IndexArray );
+        glDrawElements( GL_TRIANGLES, m_iNumOfIndices, GL_UNSIGNED_INT, m_IndexArray );
         glEnable(GL_CULL_FACE);
     }
     glPopMatrix();
@@ -41,9 +39,13 @@ bool GOCVisualVAPlane::Create()
     const int slices = m_iSlices;
     const int array_size = slices*stacks;
 
+    m_iNumOfVertices    = array_size;
+    m_iNumOfTriangles   = (stacks-1)*(slices-1)*2;
+    m_iNumOfIndices     = m_iNumOfTriangles*3;
+
     m_VertexArray   = new float[array_size][3];
     m_NormalArray   = new float[array_size][3];
-    m_IndexArray    = new GLuint[(stacks-1)*(slices-1)*6];
+    m_IndexArray    = new GLuint[m_iNumOfIndices];
     m_TexArray      = new float[array_size][2];
 
     if ((stacks < 1) && (slices <1)) return false;
@@ -72,22 +74,15 @@ bool GOCVisualVAPlane::Create()
             qOri.Rotate( temp );
             temp += vPos;
 
-            m_VertexArray[index][0] = temp.x();
-            m_VertexArray[index][1] = temp.y();
-            m_VertexArray[index][2] = temp.z();
-
+            SetVertex(index, temp);
+            
             temp.Set( 0.0f, 0.0f, 1.0f );
             qOri.Rotate( temp );
 
-            m_NormalArray[index][0] = temp.x();
-            m_NormalArray[index][1] = temp.y();
-            m_NormalArray[index][2] = temp.z();
-
+            SetNormal(index, temp);
+            
             m_TexArray[index][0] = (float)i / (stacks-1);
             m_TexArray[index][1] = temp_tex_y;
-            
-            //std::cout << "Vertex[" << index << "]=(" << m_VertexArray[index][0] << ", " << m_VertexArray[index][1] << ") -- ";
-            //std::cout << "Texture[" << index << "]=(" << m_TexArray[index][0] << ", " << m_TexArray[index][1] << ")" << std::endl;
         }
     }
     

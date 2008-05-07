@@ -142,38 +142,54 @@ bool CollisionDetector::CheckSphereFinitePlane( IGOCBoundingVolume *a,
     const Vec3f &vPlaneCenter = plane->GetOwner()->GetPosition();
     const Vec2f &vHalfSize    = plane->GetHalfSize();
 
-    const Vec3f Dist = vSpherePos - vPlaneCenter;
+    const Vec3f pos_diff_now = vSpherePos - vPlaneCenter;
 
     // Check if the sphere is withing the planes size
     const Vec3f &Nx = plane->GetBinormal();     // Check binoral direction
-    float DistX = Nx.Dot( Dist ) - fRadius - vHalfSize.x();
+    const float DistX = Nx.Dot( pos_diff_now ) - fRadius - vHalfSize.x();
     if( DistX >= 0.0f ) return false;
-
-    Vec3f vNormal = plane->GetNormal();
-    Vec3f Ny      = vNormal.Cross(Nx);          // Check tangent direction
-    float DistY   = Ny.Dot( Dist ) - fRadius - vHalfSize.y();
+    
+    const Vec3f vNormal = plane->GetNormal();
+    const Vec3f Ny      = vNormal.Cross(Nx);          // Check tangent direction
+    const float DistY   = Ny.Dot( pos_diff_now ) - fRadius - vHalfSize.y();
     if( DistY >= 0.0f ) return false;
+    
+    const Vec3f &pos_diff_before = physics->GetPrevPosition() - vPlaneCenter;
+    const Vec3f vNormalRev  = ~vNormal;
 
     // Find the distance from the plane
-    const Vec3f &prevDist = physics->GetPrevPosition() - vPlaneCenter;
-    float prevDistZ       = vNormal.Dot( prevDist ) - fRadius;
-    float DistZ           = vNormal.Dot( Dist ) - fRadius;
+    const float up_distance_now    = vNormal.Dot( pos_diff_now ) - fRadius;
+    const float up_distance_before = vNormal.Dot( pos_diff_before ) - fRadius;
+
+    const float down_distance_now    = vNormalRev.Dot( pos_diff_now ) - fRadius;
+    const float down_distance_before = vNormalRev.Dot( pos_diff_before ) - fRadius;
+
+    bool 
+        now_collision_up = false,
+        before_collision_up = false,
+        now_collision_down = false,
+        before_collision_down = false;
     
+    if( up_distance_now < 0.0f ) now_collision_up = true;
+    if( up_distance_before < 0.0f ) before_collision_up = true;
+    if( down_distance_now < 0.0f ) now_collision_down = true;
+    if( down_distance_before < 0.0f ) before_collision_down = true;
+
     float penetration;
-    if( ( DistZ < -E_ZERO && prevDistZ >= E_ZERO ) || ( DistZ > E_ZERO && prevDistZ <= -E_ZERO ) )
+    Vec3f normal;
+
+    if( now_collision_up && !before_collision_up )
     {
-        float vel = vNormal.Dot( point->GetVelocity() );
-        if( vel <= 0.0f ) 
-            penetration = -DistZ;
-        else {
-            penetration = DistZ;
-            vNormal = ~vNormal;
-        }
+        penetration = up_distance_now;
+        normal = vNormal;
+    }
+    else if( now_collision_down && !before_collision_down )
+    {
+        penetration = down_distance_now;
+        normal = vNormalRev;
     }
     else
-    {
         return false;
-    }
 
     // Fill contact data
     data->SetBody(0, point );
@@ -181,7 +197,7 @@ bool CollisionDetector::CheckSphereFinitePlane( IGOCBoundingVolume *a,
     data->SetPenetration( penetration );
     data->SetRestitution( ( sphere->GetElasticity() + plane->GetElasticity() ) * 0.5f );
     data->SetFriction( ( sphere->GetFriction() + plane->GetFriction() ) * 0.5f );
-    data->SetNormal(vNormal);
+    data->SetNormal(normal);
 
     return true;
 
@@ -199,7 +215,7 @@ bool CollisionDetector::CheckPlaneParticle( IGOCBoundingVolume *a,
     GOCBoundingPlane *plane = static_cast<GOCBoundingPlane*>(a);
 
     // Sphere data
-    const float fParticleRadius   = 0.01f; /* make particle a little bigger */
+    const float fParticleRadius = 0.01f; /* make particle a little bigger */
 
     // Plane data
     const Vec3f &vPlaneCenter = plane->GetOwner()->GetPosition();
@@ -240,7 +256,7 @@ bool CollisionDetector::CheckSphereParticle( IGOCBoundingVolume *a,
     CParticle *point = &((GOCPhysicsPoint*)a->GetOwner()->GetGOC("Physics"))->GetBody();
 
     // Sphere data
-    const float fRadiiSum   = sphere->GetRadius() + 0.02f; /* make the sphere a little bigger */
+    const float fRadiiSum   = sphere->GetRadius() + 0.028f; /* make the sphere a little bigger */
     Vec3f vDistance = point->GetPosition() - b->GetPosition();
     const float fDistance = vDistance.SqrLength();
 
@@ -262,37 +278,6 @@ bool CollisionDetector::CheckSphereParticle( IGOCBoundingVolume *a,
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-bool CollisionDetector::CheckParticleParticle( CParticle *a, 
-                                               CParticle *b, 
-                                               CCollisionData *data ) 
-{
-    if( !data ) return false;
-
-    // Sphere data
-    const float fRadiiSum   = 0.01f + 0.01f; /* make the sphere a little bigger */
-
-    Vec3f vDistance = a->GetPosition() - b->GetPosition();
-    const float fDistance = vDistance.SqrLength();
-
-    if( fDistance >= fRadiiSum * fRadiiSum ) return false;
-
-    vDistance.Normalize();
-
-    // Fill contact data
-    data->SetBody(0, a );
-    data->SetBody(1, b );
-    data->SetPenetration( fRadiiSum - sqrt(fDistance) );
-    data->SetRestitution( 1.0f ); // assume no loss of energy
-
-    data->SetFriction( 0.0f );
-    data->SetNormal(vDistance);
-
-    return true;
-
-} // end CheckSphereDeformable()
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 bool CollisionDetector::CheckPrimitiveSphereBox( IGOCBoundingVolume *a, 
                                                  IGOCBoundingVolume *b ) 
 {
@@ -302,14 +287,16 @@ bool CollisionDetector::CheckPrimitiveSphereBox( IGOCBoundingVolume *a,
     const Vec3f &vBoxPos = box->GetOwner()->GetPosition();
     const Vec3f &vRelPos = sphere->GetOwner()->GetPosition();
 
-    //if( vRelPos.x() - sphere->GetRadius() > vBoxPos.x() + box->GetHalfSize().x() ) return false;
-    //if( vRelPos.x() + sphere->GetRadius() < vBoxPos.x() - box->GetHalfSize().x() ) return false;
+    const Vec3f boxEx = box->GetHalfSize() + 0.5f;
 
-    //if( vRelPos.y() - sphere->GetRadius() > vBoxPos.y() + box->GetHalfSize().y() ) return false;
-    //if( vRelPos.y() + sphere->GetRadius() < vBoxPos.y() - box->GetHalfSize().y() ) return false;
+    if( vRelPos.x() - sphere->GetRadius() > vBoxPos.x() + boxEx.x() ) return false;
+    if( vRelPos.x() + sphere->GetRadius() < vBoxPos.x() - boxEx.x() ) return false;
 
-    //if( vRelPos.z() - sphere->GetRadius() > vBoxPos.z() + box->GetHalfSize().z() ) return false;
-    //if( vRelPos.z() + sphere->GetRadius() < vBoxPos.z() - box->GetHalfSize().z() ) return false;
+    if( vRelPos.y() - sphere->GetRadius() > vBoxPos.y() + boxEx.y() ) return false;
+    if( vRelPos.y() + sphere->GetRadius() < vBoxPos.y() - boxEx.y() ) return false;
+
+    if( vRelPos.z() - sphere->GetRadius() > vBoxPos.z() + boxEx.z() ) return false;
+    if( vRelPos.z() + sphere->GetRadius() < vBoxPos.z() - boxEx.z() ) return false;
 
     return true;
 }

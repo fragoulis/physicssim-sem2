@@ -28,7 +28,14 @@ CPhysicsManager::CPhysicsManager()
 
 void CPhysicsManager::Init()
 {
-    m_CollisionStack.Init(300);
+    CFG_SERVER_OPEN;
+    CFG_LOAD("Physics_Attributes");
+    
+    int stack;
+    CFG_1i("collision_stack", stack);
+    assert(stack);
+
+    m_CollisionStack.Init(stack);
 }
 
 
@@ -48,7 +55,6 @@ void CPhysicsManager::Update( float delta )
 
     if( delta > 0.0f )
         UpdateCycle( delta );
-
 
     if( ObjectMutex::IsWritable() )
     {
@@ -106,10 +112,7 @@ void CPhysicsManager::CheckCollisions()
         {
             // Have cloth-ball detection off
             GOCBoundingDeformable *cloth = (GOCBoundingDeformable*)m_Cloth;
-            if( CollisionDetector::CheckPrimitiveSphereBox( 
-                sphere, 
-                cloth->GetPrimitive() ) 
-                )
+            if( CollisionDetector::CheckPrimitiveSphereBox( sphere, cloth->GetPrimitive() ) )
             {
                 // Check sphere with all particles of the cloth
                 while( CParticle *p = cloth->GetParticle() )

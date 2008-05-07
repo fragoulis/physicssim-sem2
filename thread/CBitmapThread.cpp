@@ -3,7 +3,7 @@
 #include "../Util/Config.h"
 #include "../Util/tostring.h"
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void CBitmapThread::Run( void *lpArgs )
 {
     StringList::iterator image_iterator = m_images.begin();
@@ -12,11 +12,15 @@ void CBitmapThread::Run( void *lpArgs )
         MGRScene::Get().LoadNewBackplaneTexture( (*image_iterator).c_str() );
 
         // Advance iterator to use next image
-        ++image_iterator;
-        if( image_iterator == m_images.end() )
-            image_iterator = m_images.begin();
+        if( m_time > m_changeInterval )
+        {
+            m_time = 0;
+            ++image_iterator;
+            if( image_iterator == m_images.end() )
+                image_iterator = m_images.begin();
+        }
 
-        // Wait for a while ...
+        m_time++;
         Sleep(m_sleep);
     }
 
@@ -28,6 +32,7 @@ void CBitmapThread::OnStart()
     // Read the path of the images and the images' filenames
     CFG_CLIENT_OPEN;
     CFG_LOAD("Bitmap_Reader");
+    CFG_1i("ChangeInterval", m_changeInterval);
     CFG_1i("Sleep", m_sleep);
 
     std::string path;
@@ -45,4 +50,6 @@ void CBitmapThread::OnStart()
 
         m_images[i] = path + file;
     }
+
+    m_time = 0;
 }

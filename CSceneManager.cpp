@@ -17,7 +17,7 @@ m_Backplane(0),
 m_Shelf(0),
 m_uiBackPlaneTexture(0),
 m_bTextured(true),
-m_bBackplaneChanged(false)
+m_bLoaderActive(false)
 {}
 
 // ------------------------------------------------------------------------
@@ -51,7 +51,7 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
             else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
                 m_SmallSpheres.push_back( pVisComp );
             }
-            else if( pVisComp->GetOwner()->Is("Plane") ) {
+            if( pVisComp->GetOwner()->Is("Plane") ) {
                 m_Walls.push_back( pVisComp );
             }
             else if( pVisComp->GetOwner()->Is("Backplane") ) {
@@ -69,12 +69,6 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
         }
         __FINALLY { m_vizMutex.ReleaseAll(); }
     } // if( )
-
-    //if( m_vizMutex.IsWritable() )
-    //{
-    //    __TRY { m_vVisuals.push_back( pVisComp ); }
-    //    __FINALLY { m_vizMutex.ReleaseAll(); }
-    //}
 
 } // Register()
 
@@ -115,53 +109,53 @@ void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
         __FINALLY { m_vizMutex.ReleaseAll(); }
     } // if( )
 
-    //if( m_vizMutex.IsWritable() )
-    //{
-    //    __TRY { FIND_AND_ERASE(m_vVisuals, pVisComp); }
-    //    __FINALLY { m_vizMutex.ReleaseAll(); }
-    //}
-
 } // Unregister()
 
 // ------------------------------------------------------------------------
 void CSceneManager::GenerateNewBackplaneTexture() const
 {
-    if( !m_bBackplaneChanged ) return;
-
-    bool ret = m_image.glTexImage2D();
-    if( !ret ) {
-        m_image.Free();
-        return;
-    }
+    if( !m_bLoaderActive ) return;
 
     // Delete previous texture if there is one
-    if( m_uiBackPlaneTexture > 0 ) 
-        glDeleteTextures( 1, &m_uiBackPlaneTexture );
+    if( m_uiBackPlaneTexture > 0 ) ClearBackplaneTexture();
 
     // Generate texture
     glGenTextures( 1, &m_uiBackPlaneTexture );
     assert(m_uiBackPlaneTexture);
 
-    glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    m_image.gluBuild2DMipmaps();
+    if( m_bpMutex.IsWritable() )
+    {
+        __TRY {
+            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
+            m_image.gluBuild2DMipmaps();
+        }
+        __FINALLY { m_bpMutex.ReleaseAll(); }
+    }
 
     m_image.Free();
 
-    m_bBackplaneChanged = false;
+    m_bLoaderActive = false;
+}
+
+// ------------------------------------------------------------------------
+void CSceneManager::ClearBackplaneTexture() const
+{ 
+    glDeleteTextures( 1, &m_uiBackPlaneTexture );
+    m_uiBackPlaneTexture = 0;
 }
 
 // ------------------------------------------------------------------------
 void CSceneManager::LoadNewBackplaneTexture( const char *filename )
 {
-    bool ret = m_image.Load( filename );
-    if( !ret ) {
-        m_image.Free();
-        return;
+    if( m_bpMutex.IsWritable() )
+    {
+        __TRY {
+            if( !m_image.Load( filename ) ) m_image.Free();
+            else 
+                m_bLoaderActive = true;
+        }
+        __FINALLY { m_bpMutex.ReleaseAll(); }
     }
-    
-    m_bBackplaneChanged = true;
 }
 
 // ------------------------------------------------------------------------
@@ -180,92 +174,99 @@ void CSceneManager::Render() const
     // Apply material
     MGRMaterial::Get().Apply(MGRMaterial::METAL);
 
-    if( m_vizMutex.IsReadable() && ObjectMutex::IsReadable() )
+    if( m_vizMutex.IsReadable() )
     {
-        __TRY 
-        { 
-            // ----------------------------------------------------------------
-            // Render other walls
-            uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            MGRVertexArray::Get().Begin("Wall");
-            for( iter = m_Walls.begin(); iter != m_Walls.end(); ++iter )
+        __TRY
+        {
+            if( ObjectMutex::IsReadable() )
             {
-                float m[16];
-                const Quatf &vOri = (*iter)->GetOwner()->GetOrientation();
-                vOri.ToMatrix(m);
-                
-                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
-                glPushMatrix();
-                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
-                    glMultMatrixf(m);
-                    MGRVertexArray::Get().Render();
-                glPopMatrix();
-            }
-            MGRVertexArray::Get().End();
-            
-            // ----------------------------------------------------------------
-            // Render small spheres
-            uiTextureId = MGRTexture::Get().GetTexture("images/fiberglass.jpg");
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            MGRVertexArray::Get().Begin("SmallSphere");
-            for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
-            {
-                //(*iter)->Render();
-                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
-                glPushMatrix();
-                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
-                    MGRVertexArray::Get().Render();
-                glPopMatrix();
-            }
-            MGRVertexArray::Get().End();
+                __TRY 
+                { 
+                    // ----------------------------------------------------------------
+                    // Render small spheres
+                    uiTextureId = MGRTexture::Get().GetTexture("images/fiberglass.jpg");
+                    glBindTexture( GL_TEXTURE_2D, uiTextureId );
+                    MGRVertexArray::Get().Begin("SmallSphere");
+                    for( iter = m_SmallSpheres.begin(); iter != m_SmallSpheres.end(); ++iter )
+                    {
+                        const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                        glPushMatrix();
+                            glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                            MGRVertexArray::Get().Render();
+                        glPopMatrix();
+                    }
+                    MGRVertexArray::Get().End();
 
-            // ----------------------------------------------------------------
-            // Render big spheres
-            uiTextureId = MGRTexture::Get().GetTexture("images/bubbles-large.jpg");
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            MGRVertexArray::Get().Begin("BigSphere");
-            for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
-            {
-                //(*iter)->Render();
-                const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
-                glPushMatrix();
-                    glTranslatef( vPos.x(), vPos.y(), vPos.z() );
-                    MGRVertexArray::Get().Render();
-                glPopMatrix();
-            }
-            MGRVertexArray::Get().End();
+                    // ----------------------------------------------------------------
+                    // Render big spheres
+                    uiTextureId = MGRTexture::Get().GetTexture("images/bubbles-large.jpg");
+                    glBindTexture( GL_TEXTURE_2D, uiTextureId );
+                    MGRVertexArray::Get().Begin("BigSphere");
+                    for( iter = m_BigSpheres.begin(); iter != m_BigSpheres.end(); ++iter )
+                    {
+                        const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                        glPushMatrix();
+                            glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                            MGRVertexArray::Get().Render();
+                        glPopMatrix();
+                    }
+                    MGRVertexArray::Get().End();
 
-            // ----------------------------------------------------------------
-            // Render cloth || shelf
-            uiTextureId = MGRTexture::Get().GetTexture("images/cloth.jpg");
-            glBindTexture( GL_TEXTURE_2D, uiTextureId );
-            m_Cloth->Render();
-            m_Shelf->Render();
+                    // ----------------------------------------------------------------
+                    // Render cloth || shelf
+                    uiTextureId = MGRTexture::Get().GetTexture("images/cloth.jpg");
+                    glBindTexture( GL_TEXTURE_2D, uiTextureId );
+                    if(m_Cloth) m_Cloth->Render();
+                    if(m_Shelf) m_Shelf->Render();
 
-            // ----------------------------------------------------------------
-            // Render backplane
-            glBindTexture( GL_TEXTURE_2D, m_uiBackPlaneTexture );
-            MGRVertexArray::Get().Begin("Wall");
-            //m_Backplane->Render();
-            float m[16];
-            const Quatf &vOri = m_Backplane->GetOwner()->GetOrientation();
-            vOri.ToMatrix(m);
-            
-            const Vec3f &vPos = m_Backplane->GetOwner()->GetPosition();
-            glPushMatrix();
-                glTranslatef( vPos.x(), vPos.y(), vPos.z() );
-                glMultMatrixf(m);
-                MGRVertexArray::Get().Render();
-            glPopMatrix();
-            MGRVertexArray::Get().End();
+                    // ----------------------------------------------------------------
+                    // Render other walls
+                    uiTextureId = MGRTexture::Get().GetTexture("images/metal01-large.jpg");
+                    glBindTexture( GL_TEXTURE_2D, uiTextureId );
+                    MGRVertexArray::Get().Begin("Wall");
+                    for( iter = m_Walls.begin(); iter != m_Walls.end(); ++iter )
+                    {
+                        float m[16];
+                        const Quatf &vOri = (*iter)->GetOwner()->GetOrientation();
+                        vOri.ToMatrix(m);
+                        
+                        const Vec3f &vPos = (*iter)->GetOwner()->GetPosition();
+                        glPushMatrix();
+                            glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                            glMultMatrixf(m);
+                            MGRVertexArray::Get().Render();
+                        glPopMatrix();
+                    }
+                    MGRVertexArray::Get().End();
+
+                    // ----------------------------------------------------------------
+                    // Render backplane
+                    if(m_Backplane)
+                    {
+                        uiTextureId = (m_uiBackPlaneTexture==0)?uiTextureId:m_uiBackPlaneTexture;
+                        glBindTexture( GL_TEXTURE_2D, uiTextureId );
+                        MGRVertexArray::Get().Begin("Wall");
+                        float m[16];
+                        const Quatf &vOri = m_Backplane->GetOwner()->GetOrientation();
+                        vOri.ToMatrix(m);
+                        
+                        const Vec3f &vPos = m_Backplane->GetOwner()->GetPosition();
+                        glPushMatrix();
+                            glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+                            glMultMatrixf(m);
+                            MGRVertexArray::Get().Render();
+                        glPopMatrix();
+                        MGRVertexArray::Get().End();
+                    }
+                }
+                __FINALLY { ObjectMutex::ReleaseWrite(); }
+
+            } // if( .. )
         }
-        __FINALLY 
-        { 
-            m_vizMutex.ReleaseWrite(); 
-            ObjectMutex::ReleaseWrite();
-        }
+        __FINALLY { m_vizMutex.ReleaseWrite(); }
+
     } // if(  )
 
     MGRShader::Get().end();
-}
+
+} // Render()

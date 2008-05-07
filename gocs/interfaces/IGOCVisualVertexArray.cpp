@@ -6,7 +6,9 @@
 #include "IGOCVisualVertexArray.h"
 using namespace tlib::gocs;
 
-IGOCVisualVertexArray::IGOCVisualVertexArray():
+IGOCVisualVertexArray::IGOCVisualVertexArray( int stacks, int slices ):
+m_iStacks(stacks),
+m_iSlices(slices),
 m_VertexArray(0),
 m_NormalArray(0),
 m_TexArray(0),
