@@ -53,9 +53,6 @@ public:
 protected:
     //! Sets up the particles and springs
     virtual void Setup() = 0;
-
-private:
-    void UpdateNormals();
 };
 
 } // end namespace gocs

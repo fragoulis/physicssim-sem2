@@ -1,5 +1,5 @@
-#include "CPhysicsThread.h"
 #include "../MainApp.h"
+#include "CPhysicsThread.h"
 #include "../CPhysicsManager.h"
 #include "../Time/Clock.h"
 #include "../Util/CLogger.h"
@@ -7,9 +7,13 @@
 #include "../Math/Random.h"
 #include "../ObjectMutex.h"
 #include "../goc_includes.h"
+#include "../Network/CPacket.h"
 
 using namespace tlib::math;
 using namespace tlib::time;
+
+#include "../GOCS/Interfaces/IGOCVisualVertexArray.h"
+using tlib::gocs::IGOCVisualVertexArray;
 
 CPhysicsThread::CPhysicsThread():
 m_bPause(false),
@@ -125,6 +129,43 @@ void CPhysicsThread::ToggleClothShelf()
 {
     m_Cloth->Toggle();
     m_Shelf->Toggle();
+}
+
+// ----------------------------------------------------------------------------
+void CPhysicsThread::WritePacket( CPacket &packet )
+{
+    // push planes
+    for( int i=0; i<MAX_PLANES; i++ ) {
+        packet.push<transform_t>( m_Planes[i]->GetTransform() );
+    }
+
+    // push cloth/shelf status
+    packet.push<bool>( m_Cloth->IsActive() );
+
+    if( m_Cloth->IsActive() ) {
+        // push the cloth
+        IGOCVisualVertexArray *visualData = (IGOCVisualVertexArray*)m_Cloth->GetGOC("Visual");
+        
+        const int bytes = visualData->GetNumOfVertices()*3*sizeof(float);
+        packet.push<float>( &visualData->GetVertex(0)[0], bytes );
+    }
+    else {
+        // push the shelf
+        packet.push<transform_t>( m_Shelf->GetTransform() );
+    }
+
+    // push the balls
+    packet.push<int>((int)m_Spheres.size());
+    ObjectList::iterator i = m_Spheres.begin();
+    for(; i != m_Spheres.end(); ++i )
+    {
+        CGameObject *sphere = *i;
+        packet.push<position_t>(sphere->GetPosition());
+        bool isSmall = true;
+        if( sphere->Is("BigSphere") ) isSmall = false;
+        packet.push<bool>(isSmall);
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -329,6 +370,7 @@ void CPhysicsThread::Reset()
 
     m_Cloth->Activate();
     m_Shelf->Deactivate();
+    m_LastSphere = 0;
 
     // Hide deformable !
 

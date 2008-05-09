@@ -10,16 +10,18 @@
 using namespace tlib;
 using namespace tlib::gocs;
 
+class CPacket;
+
 class CPhysicsThread : public IThread
 {
 protected:
     virtual void Run( void *lpArgs );
 
 private:
-    typedef std::vector<CGameObject*> ObjectList;
-
     //! The number of the cube walls :P
     static const int MAX_PLANES = 6;
+
+    typedef std::vector<CGameObject*> ObjectList;
     
     // Hold sphere stats
     int m_iNumOfBigSpheres;
@@ -64,6 +66,9 @@ public:
 
     //! Returns the transformation of last sphere
     CGameObject* GetLastSphere() { return m_LastSphere; }
+    CGameObject* GetPlane(int index) { return m_Planes[index]; }
+
+    void WritePacket( CPacket &packet );
 
 private:
     virtual void OnStart();

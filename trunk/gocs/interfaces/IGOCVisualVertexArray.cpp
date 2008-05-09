@@ -48,3 +48,44 @@ void IGOCVisualVertexArray::Render() const
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }
+
+void IGOCVisualVertexArray::UpdateNormals()
+{
+    for( int j=0; j<m_iSlices; ++j )
+    {
+        for( int i=0; i<m_iStacks; ++i )
+        {
+            int index = i+j*m_iStacks;
+            Vec3f u, v1, v2;
+
+            // Pick the left vertex
+            if( i > 0 ) v1.Set( m_VertexArray[index-1] );
+            else v1.Set( m_VertexArray[index] );
+
+            // Pick the right vertex
+            if( i < m_iStacks-1 ) v2.Set( m_VertexArray[index+1] );
+            else v2.Set( m_VertexArray[index] );
+
+            u = v2 - v1;
+
+            // Pick the top
+            if( j > 0 ) v1.Set( m_VertexArray[index-m_iStacks] );
+            else v1.Set( m_VertexArray[index] );
+
+            // Pick the bottom
+            if( j < m_iSlices-1 ) v2.Set( m_VertexArray[index+m_iStacks] );
+            else v2.Set( m_VertexArray[index] );
+
+            v2 -= v1;
+
+            // Calculate normal
+            u.Cross(v2, v1);
+            
+            // Correct it
+            v1.Normalize();
+            SetNormal( index, v1 );
+
+        } // end for( ... )
+    } // end for( ... )
+
+} // UpdateNormals()

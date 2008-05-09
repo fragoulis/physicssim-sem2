@@ -10,3 +10,8 @@ damper		0.3
 .Particle_Attributes
 damp        0.4
 drag        0.2
+
+.Server
+clients     10
+hostname    127.0.0.1
+port        2100

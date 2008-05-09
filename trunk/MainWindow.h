@@ -61,6 +61,8 @@ public:
     void OnMouseButton( MouseButton button, bool down );
     void OnMouseMove( int x, int y );
 
+    bool IsBallCamActive() const { return m_bBallCamActive; }
+
 private:
     void SetupView() const;
     void RenderHelpGrid( int lines, float size ) const;
