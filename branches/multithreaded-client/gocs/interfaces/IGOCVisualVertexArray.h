@@ -41,9 +41,11 @@ public:
     //! Renders the vertex array
     virtual void Render() const;
     virtual void Init();
+    void UpdateNormals();
 
     // Direct memory const accessor
-    const float *GetVertex( int index ) const { return m_VertexArray[index]; }
+    const float* GetVertex( int index ) const { return m_VertexArray[index]; }
+    float* GetVertex( int index ) { return m_VertexArray[index]; }
 
     // Regular accessors
     void GetVertex( int index, Vec3f &v ) const { v.Set( m_VertexArray[index] ); }

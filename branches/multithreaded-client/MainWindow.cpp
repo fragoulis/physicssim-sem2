@@ -1,11 +1,11 @@
 #include "MainWindow.h"
 #include "MainApp.h"
 #include "CSceneManager.h"
-#include "CPhysicsManager.h"
 #include "Time/Clock.h"
 #include "Util/CRecorder.h"
 #include "Util/CReplayer.h"
 #include "Math/Random.h"
+#include "GOCS/CGOCManager.h"    // The component manager
 
 #include "Util/CLogger.h"
 #include "Util/Config.h"
@@ -64,8 +64,7 @@ void MainWindow::OnCreate()
     glShadeModel    (GL_SMOOTH);
 
     MGRScene::_Get().Init();
-    MGRPhysics::_Get().Init();
-    CGOCManager::_Get();
+    //CGOCManager::_Get();
 
     InputRec::_Get().Clear(m_RecData);
     InputReplay::_Get();
@@ -80,8 +79,8 @@ void MainWindow::OnCreate()
     m_Lights[0].SetPosition( Vec3f( 0.0f, 0.0f, 0.4f ) );
     m_Lights[0].TurnOn();
 
-    MainApp::GetPhysics().Start(); // Safely start the physics thread
     MainApp::GetBitmap().Start();
+    MainApp::GetClient().Start();
 }
 
 //-----------------------------------------------------------------------------
@@ -251,7 +250,7 @@ void MainWindow::KeyboardOnReplay( int key )
 //-----------------------------------------------------------------------------
 void MainWindow::CommonKeyboard( int key )
 {
-    MainApp::Get().SetKey( key, true );
+    //MainApp::Get().SetKey( key, true );
 
     switch( key )
     {
@@ -329,8 +328,7 @@ void MainWindow::ActMouseMove( int x, int y )
         const float cubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
         const float cubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
 
-        MainApp::GetPhysics().
-            SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
+        //MainApp::GetPhysics().SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
 
         m_fAccumX += dX;
         m_fAccumY += dY;
@@ -347,19 +345,19 @@ void MainWindow::ActMouseMove( int x, int y )
 //-----------------------------------------------------------------------------
 void MainWindow::RestartClockFromFile()
 {
-    MainApp::GetPhysics().RestartClockFromFile();
+    //MainApp::GetPhysics().RestartClockFromFile();
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::RestartClock()
 {
-    MainApp::GetPhysics().RestartClock();
+    //MainApp::GetPhysics().RestartClock();
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::Reset()
 {
-    MainApp::GetPhysics().SetReset();
+    //MainApp::GetPhysics().SetReset();
 }
 
 //-----------------------------------------------------------------------------
@@ -369,15 +367,12 @@ void MainWindow::OnDestroy()
         InputRec::Get().End(); // Stop recoding
     }
 
-    MainApp::GetPhysics().Terminate();
+    MainApp::GetClient().Terminate();
     MainApp::GetBitmap().Terminate();
 
-    Clock::Destroy();
+    //Clock::Destroy();
     InputRec::Destroy();
     InputReplay::Destroy();
-    CGOCManager::Destroy();
-    MGRPhysics::Destroy();
-    MGRScene::Destroy();
 }
 
 //-----------------------------------------------------------------------------
@@ -402,26 +397,24 @@ void MainWindow::PrintStats()
     float deltaY = 0.05f, startY = 1.0f;
     #define TEXT_Y startY-=deltaY
 
-    glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "Delta: %.4f", (float)Clock::Get().GetTimeDelta() );
-    glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "TimeStep: %.4f", MGRPhysics::Get().GetTimeStep() );
+    //glRasterPos2f( -1.0f, TEXT_Y );
+    //Printf( "Delta: %.4f", (float)Clock::Get().GetTimeDelta() );
 
-    int smallspheres, bigspheres;
-    MainApp::GetPhysics().GetNumOfSpheres( smallspheres, bigspheres );
-    glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "Big spheres: %i", bigspheres );
-    glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "Small Spheres: %i", smallspheres );
-    
-    glRasterPos2f( -1.0f, TEXT_Y );
-    string gamestate("Normal");
-    switch(m_AppState)
-    {
-    case AS_RECORD: gamestate = "Record"; break;
-    case AS_REPLAY: gamestate = "Replay"; break;
-    }
-    Printf( "Gamestate: %s", gamestate.c_str() );
+    //int smallspheres, bigspheres;
+    //MainApp::GetPhysics().GetNumOfSpheres( smallspheres, bigspheres );
+    //glRasterPos2f( -1.0f, TEXT_Y );
+    //Printf( "Big spheres: %i", bigspheres );
+    //glRasterPos2f( -1.0f, TEXT_Y );
+    //Printf( "Small Spheres: %i", smallspheres );
+    //
+    //glRasterPos2f( -1.0f, TEXT_Y );
+    //string gamestate("Normal");
+    //switch(m_AppState)
+    //{
+    //case AS_RECORD: gamestate = "Record"; break;
+    //case AS_REPLAY: gamestate = "Replay"; break;
+    //}
+    //Printf( "Gamestate: %s", gamestate.c_str() );
 
     //if( m_bShowControls )
     //{
@@ -498,7 +491,7 @@ void MainWindow::UpdateActiveCamera()
     if( m_bBallCamActive )
     {
         // Get last sphere trasformation data if exists
-        CGameObject *sphere = MainApp::GetPhysics().GetLastSphere();
+        CGameObject *sphere = MainApp::Get().GetLastSphere();
         if( !sphere ) {
             // fallback
             m_bBallCamActive = false;
