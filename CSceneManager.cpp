@@ -2,6 +2,7 @@
 #include "CSceneManager.h"
 #include "MainApp.h"
 #include "GOCS/Interfaces/IGOCVisual.h"
+#include "GOCS/CGameObject.h"
 #include "CShaderManager.h"
 #include "CTextureManager.h"
 #include "CMaterialManager.h"
