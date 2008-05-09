@@ -41,6 +41,7 @@ public:
     //! Renders the vertex array
     virtual void Render() const;
     virtual void Init();
+    void UpdateNormals();
 
     // Direct memory const accessor
     const float *GetVertex( int index ) const { return m_VertexArray[index]; }

@@ -1,5 +1,5 @@
-#include "MainWindow.h"
 #include "MainApp.h"
+#include "MainWindow.h"
 #include "CSceneManager.h"
 #include "CPhysicsManager.h"
 #include "Time/Clock.h"
@@ -82,6 +82,8 @@ void MainWindow::OnCreate()
 
     MainApp::GetPhysics().Start(); // Safely start the physics thread
     MainApp::GetBitmap().Start();
+    MainApp::GetListener().Start();
+    MainApp::GetServer().Start();
 }
 
 //-----------------------------------------------------------------------------
@@ -369,6 +371,8 @@ void MainWindow::OnDestroy()
         InputRec::Get().End(); // Stop recoding
     }
 
+    MainApp::GetServer().Terminate();
+    MainApp::GetListener().Terminate();
     MainApp::GetPhysics().Terminate();
     MainApp::GetBitmap().Terminate();
 
