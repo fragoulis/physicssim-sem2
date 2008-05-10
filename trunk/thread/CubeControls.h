@@ -14,6 +14,7 @@ class CubeAngles : public CMutex
 public:
     bool Get( float &horizontal, float &vertical ) const;
     bool Set( float horizontal, float vertical );
+    bool Add( float horizontal, float vertical );
     bool Clear() { return Set( 0.0f, 0.0f ); }
 
 private:
@@ -28,8 +29,9 @@ public:
     CubeControls();
 
     void CheckAngles();
-    void ReadAngles() {
-        angles.Get( horizontalAngle, verticalAngle );
+    void ReadAngles() { angles.Get( horizontalAngle, verticalAngle ); }
+    void AddAngles( float horizontal, float vertical ) { 
+        angles.Add( horizontal, vertical ); 
     }
 
 public:

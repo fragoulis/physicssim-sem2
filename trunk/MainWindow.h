@@ -61,7 +61,7 @@ public:
     void OnMouseButton( MouseButton button, bool down );
     void OnMouseMove( int x, int y );
 
-    bool IsBallCamActive() const { return m_bBallCamActive; }
+    int GetState() const { return m_AppState; }
 
 private:
     void SetupView() const;

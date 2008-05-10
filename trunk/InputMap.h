@@ -15,6 +15,7 @@ class InputMap : public CMutex
 public:
     InputMap();
     bool Get( input_t &data ) const;
+    void AccumInput(const input_t &data);
     bool Clear();
 
     bool SetMButton( bool mbutton );

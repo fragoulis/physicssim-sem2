@@ -1,11 +1,12 @@
 #include "CListeningThread.h"
-#include "ClientMutex.h"
 #include "../Util/Config.h"
 
 #include <fstream>
 using namespace std;
 
+ofstream dout("serverdump.txt");
 ofstream dout2("listenerdump.txt");
+ofstream dout3("senddump.txt");
 
 // -----------------------------------------------------------------------------
 void CListeningThread::OnStart()
@@ -15,33 +16,83 @@ void CListeningThread::OnStart()
 
     int clients;
     CFG_1i("clients", clients);
-    m_clients.create(clients);
+    m_clientPool.create(clients);
 
     CFG_str("hostname", m_hostname);
-    CFG_str("port", m_port);
+    CFG_str("sendPort", m_sendPort);
+    CFG_str("recvPort", m_recvPort);
 }
 
 // -----------------------------------------------------------------------------
 void CListeningThread::Run( void *lpArgs )
 {
     WSA wsa;
-    SocketAcceptor server( INETAddr(m_hostname.c_str(), m_port.c_str()) );
-	server.listen();
+
+	SocketAcceptor sendServer( INETAddr(m_hostname.c_str(), m_sendPort.c_str()) );
+	sendServer.listen();
+	SocketAcceptor recvServer( INETAddr(m_hostname.c_str(), m_recvPort.c_str()) );
+	recvServer.listen();
+
+    m_recv.setServer(&recvServer);
+    m_recv.Start();
+    m_send.Start();
+
+    //linger ling;
+	//ling.l_onoff = 1;
+	//ling.l_linger = 0;
+    //setsockopt( sendServer.handle(), SOL_SOCKET, SO_LINGER, (char*)&ling, sizeof(ling) );
+    //setsockopt( recvServer.handle(), SOL_SOCKET, SO_LINGER, (char*)&ling, sizeof(ling) );
+
+    fd_set allMasks;
+	FD_ZERO (&allMasks);
+	FD_SET (sendServer.handle(), &allMasks);
+	FD_SET (recvServer.handle(), &allMasks);
+
+    timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
 
     while(IsRunning())
     {
-        SocketStream *newStream = m_clients.get();
-        server.accept(*newStream);
-        
-        dout2 << "New client" << std::endl;
+        fd_set readMasks = allMasks;
 
-        //if( ClientMutex::IsWritable() || ClientMutex::clients.empty() )
+        // Final parameter of Null causes statement to block
+		if( select(0, &readMasks, NULL, NULL, &timeout) < 0 ) {
+			dout2 << "Listener port error: " << WSAGetLastError() << endl;
+			break;
+		}
+
+		if( FD_ISSET (sendServer.handle(), &readMasks) ) 
         {
-            ClientMutex::clients.push_back(newStream);
-            //ClientMutex::ReleaseAll();
-        }
+			SocketStream *newStream = m_clientPool.get();
+            sendServer.accept(*newStream);
 
-        dout2 << "Clients=" << ClientMutex::clients.size() << std::endl;
+            // push the stream to the sending list
+            m_send.addClient(newStream);
+
+            dout3 << "New sending client" << endl;
+		} 
+        else if( FD_ISSET (recvServer.handle(), &readMasks) ) 
+        {
+			SocketStream *newStream = m_clientPool.get();
+            recvServer.accept(*newStream);
+
+            // push the stream to the recieving list
+            m_recv.addClient(newStream);
+
+            dout2 << "New recieving client" << endl;
+		} 
+        //else {
+		//	dout << "Unknown port activity" << endl;
+		//	break;
+		//}
     }
 
 } // Run()
+
+// -----------------------------------------------------------------------------
+void CListeningThread::OnEnd()
+{
+    m_send.Terminate();
+    m_recv.Terminate();
+}

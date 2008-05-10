@@ -1,6 +1,6 @@
 .Window_Attributes
 fov 		80.0
-size 		768,768
+size 		384,384
 planes		0.01,10.0
 fullscreen 	0
 

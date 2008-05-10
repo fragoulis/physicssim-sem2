@@ -62,11 +62,12 @@ void CPhysicsThread::Run( void *lpArgs )
     }
 } // Run()
 
-#define DOWN( index ) m_input.keys[ index ]
+#define DOWN( index ) myinput.keys[index]
 // ----------------------------------------------------------------------------
 void CPhysicsThread::HandleInput()
 {
-    MainApp::Get().GetInput( m_input );
+    input_t myinput;
+    MainApp::Get().GetInput( myinput );
 
     // Handles all controls except general and replay
     if( DOWN('0') ) m_bReset = true;
@@ -155,7 +156,8 @@ void CPhysicsThread::WritePacket( CPacket &packet )
     }
 
     // push the balls
-    packet.push<int>((int)m_Spheres.size());
+    packet.push<int>(m_iNumOfBigSpheres);
+    packet.push<int>(m_iNumOfSmallSpheres);
     ObjectList::iterator i = m_Spheres.begin();
     for(; i != m_Spheres.end(); ++i )
     {
@@ -166,6 +168,19 @@ void CPhysicsThread::WritePacket( CPacket &packet )
         packet.push<bool>(isSmall);
     }
 
+}
+
+// ----------------------------------------------------------------------------
+void CPhysicsThread::ReadPacket( CPacket &packet )
+{
+    input_t myinput;
+    packet.pull<bool>(myinput.keys, sizeof(myinput.keys));
+    MainApp::Get().AccumInput(myinput);
+
+    float angleX, angleY;
+    packet.pull<float>(angleX);
+    packet.pull<float>(angleY);
+    m_cube.AddAngles(angleX, angleY);
 }
 
 // ----------------------------------------------------------------------------
