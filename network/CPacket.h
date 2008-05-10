@@ -51,7 +51,7 @@ const int DEFAULT_BUFFER_ALLOC = 1000000;
 class CPacket
 {
 private:
-    char m_buffer[DEFAULT_BUFFER_ALLOC];
+    char *m_buffer;
     int m_realSize;
     int m_index;
     int m_tries;
@@ -60,8 +60,11 @@ public:
     CPacket():
     m_tries(3)
     { 
+        m_buffer = new char[DEFAULT_BUFFER_ALLOC];
         reset(); 
     }
+
+    ~CPacket() { delete[] m_buffer; }
 
     // ------------------------------------------------------------------------
     template<class Type>
@@ -114,10 +117,14 @@ public:
         memset( m_buffer, 0, DEFAULT_BUFFER_ALLOC );
     }
 
-    void recv(SocketStream &ss)
+    int recv(SocketStream &ss)
     {
         for( int i=0; (i<m_tries) && (m_realSize<DEFAULT_BUFFER_ALLOC); i++ ) {
-		    m_realSize += ss.recv(&m_buffer[m_realSize], DEFAULT_BUFFER_ALLOC);
+		    int bytes = ss.recv(&m_buffer[m_realSize], DEFAULT_BUFFER_ALLOC);
+            if(bytes == SOCKET_ERROR) return SOCKET_ERROR;
+            m_realSize += bytes;
 	    }
+
+        return m_realSize;
     }
 };

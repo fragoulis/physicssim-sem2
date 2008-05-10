@@ -9,7 +9,8 @@
 static MainApp g_MainApp;
 
 CBitmapThread MainApp::m_tBitmap;
-CClientThread MainApp::m_tClient;
+CSendThread MainApp::m_tClientSend;
+CRecvThread MainApp::m_tClientRecv;
 
 #include "GOCS/Interfaces/IGOCVisualVertexArray.h"
 using tlib::gocs::IGOCVisualVertexArray;
@@ -21,8 +22,9 @@ MainApp& MainApp::Get() { return g_MainApp; }
 void MainApp::ReadPacket( CPacket &packet )
 {
     // camera status
-    bool camera;
-    packet.pull<bool>(camera);
+    int state;
+    packet.pull<int>(state);
+    m_tMain.SetState(state);
 
     // box data
     transform_t tr;
@@ -55,9 +57,10 @@ void MainApp::ReadPacket( CPacket &packet )
         m_Shelf->SetTransform(tr);
     }
 
-    // sphere data
-    int numOfSpheres;
-    packet.pull<int>(numOfSpheres);
+    // sphere data    
+    packet.pull<int>(m_iNumOfBigSpheres);
+    packet.pull<int>(m_iNumOfSmallSpheres);
+    int numOfSpheres = m_iNumOfBigSpheres + m_iNumOfSmallSpheres;
 
     if( 0 == numOfSpheres && m_Spheres.empty() )
     { /* do nothing */ }
@@ -120,6 +123,22 @@ void MainApp::ReadPacket( CPacket &packet )
 } // ReadPacket()
 
 // ----------------------------------------------------------------------------
+void MainApp::WritePacket( CPacket &packet )
+{
+    input_t myinput;
+    m_input.Get(myinput);
+
+    // push general keyboard input
+    packet.push<bool>(myinput.keys, sizeof(myinput.keys));
+
+    // push cume accumulated angles
+    packet.push<float>(m_tMain.GetAngleX());
+    packet.push<float>(m_tMain.GetAngleY());
+
+    m_input.Clear();
+} 
+
+// ----------------------------------------------------------------------------
 void MainApp::OnCreate()
 {
     //MGRScene::_Get().Init();
@@ -132,12 +151,6 @@ void MainApp::OnCreate()
     InitPlanes();
     InitCloth();
     InitShelf();
-
-    for( int i=0; i<0; i++ )
-    {
-        AddBigSphere();
-        AddSmallSphere();
-    }
 }
 
 // ----------------------------------------------------------------------------
@@ -193,8 +206,6 @@ void MainApp::AddBigSphere()
     }
 
     m_Spheres.push_back(pSphere);
-    m_iNumOfBigSpheres++;
-
     m_LastSphere = pSphere;
 }
 
@@ -209,8 +220,6 @@ void MainApp::AddSmallSphere()
     }
 
     m_Spheres.push_back(pSphere);
-    m_iNumOfSmallSpheres++;
-
     m_LastSphere = pSphere;
 }
 
