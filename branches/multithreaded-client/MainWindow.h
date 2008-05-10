@@ -2,7 +2,6 @@
 #include "../../GX/GXBase.h"
 #include "Util/CCamera.h"
 #include "Util/CLight.h"
-#include "Util/RecordData.h"
 #include "Math/TQuaternion.h"
 using tlib::math::Quatf;
 
@@ -31,6 +30,7 @@ private:
     int m_iMouseX, m_iMouseY;
     float m_fAccumX, m_fAccumY;
     bool m_bIsMouseDown;
+    float m_fCubeHorizontalAngle, m_fCubeVerticalAngle;
 
     // General controls
     bool m_bWireframe;
@@ -40,15 +40,6 @@ private:
     // Application states
     enum { AS_NORMAL = 0, AS_RECORD, AS_REPLAY };
     int m_AppState;
-    
-    // Recording data
-    // Used in recording mode to save all user input and flash
-    // everything at the end of the frame
-    RecordData m_RecData;
-
-    //typedef void (*KeyCallback)(MainWindow*);
-    //typedef std::map< int, KeyCallback > KeyMap;
-    //KeyMap keymap;
 
 public:
 	MainWindow();
@@ -61,24 +52,13 @@ public:
     void OnMouseButton( MouseButton button, bool down );
     void OnMouseMove( int x, int y );
 
+    void SetState( int s ) { m_AppState = s; }
+    float GetAngleX() const { return m_fCubeHorizontalAngle; }
+    float GetAngleY() const { return m_fCubeVerticalAngle; }
+    
 private:
     void SetupView() const;
     void RenderHelpGrid( int lines, float size ) const;
     void PrintStats();
-    void Reset();
-
-    // Functions to handle input at the varius game states
-    // [normal, recording, replay]
-    void KeyboardOnNormal( int key );
-    void KeyboardOnRecord( int key );
-    void KeyboardOnReplay( int key );
-    void CommonKeyboard( int key );
-    void ActMouseButton( bool down );
-    void ActMouseMove( int x, int y );
-
-    void RestartClockFromFile();
-    void RestartClock();
-    void HandleReplay();
-
     void UpdateActiveCamera();
 };

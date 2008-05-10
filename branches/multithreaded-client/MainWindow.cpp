@@ -1,9 +1,6 @@
 #include "MainWindow.h"
 #include "MainApp.h"
 #include "CSceneManager.h"
-#include "Time/Clock.h"
-#include "Util/CRecorder.h"
-#include "Util/CReplayer.h"
 #include "Math/Random.h"
 #include "GOCS/CGOCManager.h"    // The component manager
 
@@ -12,7 +9,6 @@
 
 using namespace tlib;
 using namespace tlib::math;
-using namespace tlib::time;
 using namespace tlib::gocs;
 
 #include <iostream>
@@ -64,10 +60,6 @@ void MainWindow::OnCreate()
     glShadeModel    (GL_SMOOTH);
 
     MGRScene::_Get().Init();
-    //CGOCManager::_Get();
-
-    InputRec::_Get().Clear(m_RecData);
-    InputReplay::_Get();
 
     // Initialize camera's position and direction
     m_FrontCamera.SetPosition( Vec3f( 0.0f, 0.25f, 1.25f ) );
@@ -79,8 +71,9 @@ void MainWindow::OnCreate()
     m_Lights[0].SetPosition( Vec3f( 0.0f, 0.0f, 0.4f ) );
     m_Lights[0].TurnOn();
 
-    MainApp::GetBitmap().Start();
-    MainApp::GetClient().Start();
+    //MainApp::GetBitmap().Start();
+    MainApp::GetClientRecv().Start();
+    MainApp::GetClientSend().Start();
 }
 
 //-----------------------------------------------------------------------------
@@ -101,45 +94,27 @@ void MainWindow::OnDisplay()
 //-----------------------------------------------------------------------------
 void MainWindow::OnIdle()
 {
-    // =========================================================================
-    if( m_AppState == AS_REPLAY )
-    {
-        HandleReplay();
-    }
-    // =========================================================================
-    else
-    // =========================================================================
-    if( m_AppState == AS_RECORD )
-    {
-        m_RecData.time = Clock::Get().GetCurrentFeed();
-        m_RecData.mouse = m_bIsMouseDown;
-        InputRec::Get().Record( m_RecData );
-    }
-    // =========================================================================
-
     Redraw();
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::HandleReplay()
-{
-    if( !InputReplay::Get().Read( m_RecData ) )
-    {
-        RestartClock();
-        m_AppState = AS_NORMAL;
-        return;
-    }
-
-    CommonKeyboard( m_RecData.key );
-    ActMouseButton( (m_RecData.mouse==1)?true:false ); // used macro to get rid of the warning
-    ActMouseMove( m_RecData.x, m_RecData.y );
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnKeyboard( int key, bool down )
 {
-    if( down ) return;
     key = tolower(key);
+
+    // ugly hack!!
+    switch(key)
+    {
+    case 'q': 
+    case 'z': 
+    case 'w': 
+    case 'f':
+    case 'v':
+    case 'c': break;
+    default: MainApp::Get().SetKey(key, down); break;
+    }
+
+    if( down ) return;
 
     // Handle general input
     switch(key)
@@ -176,84 +151,7 @@ void MainWindow::OnKeyboard( int key, bool down )
                 SetFullscreen(true);
         }
         break;
-    }
 
-    if( m_AppState == AS_NORMAL ) {
-        KeyboardOnNormal( key );
-    }
-    else if( m_AppState == AS_RECORD ) {
-        KeyboardOnRecord( key );
-    }
-    else {
-        KeyboardOnReplay( key );
-    }
-
-    Redraw();
-} // OnKeyboard()
-
-//-----------------------------------------------------------------------------
-void MainWindow::KeyboardOnNormal( int key )
-{
-    if( key == 'r' )
-    {
-        // Enable recording
-        m_AppState = AS_RECORD;
-        Reset();
-    }
-    else if( key == 'o' )
-    {   
-        // Enable replay if recorded data exist
-        if( !InputReplay::Get().Begin() ) return;
-    
-        Reset();
-        m_AppState = AS_REPLAY;
-        RestartClockFromFile();
-    }
-    else
-    {
-        CommonKeyboard( key );
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::KeyboardOnRecord( int key )
-{
-    if( key == 'r' )
-    {
-        // Disable recording
-        m_AppState = AS_NORMAL;
-        InputRec::Get().End();
-    }
-    else if( key == 'o' ) { /* Do nothing for 'o' */ }
-    else
-    {
-        // Record currect key
-        m_RecData.key = key;
-
-        CommonKeyboard( key );
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::KeyboardOnReplay( int key )
-{
-    // Handle replay
-    // Ignores all controls except the general
-    if( key == 'o' )
-    {
-        // Disable replay
-        RestartClock();
-        m_AppState = AS_NORMAL;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::CommonKeyboard( int key )
-{
-    //MainApp::Get().SetKey( key, true );
-
-    switch( key )
-    {
     case 'v': 
         {
             MainApp::GetBitmap().Toggle(); 
@@ -271,43 +169,21 @@ void MainWindow::CommonKeyboard( int key )
         }
         break;
     }
-}
+
+    Redraw();
+} // OnKeyboard()
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnMouseButton( MouseButton button, bool down )
 {
-    // Skip mouse input on replay
-    if( m_AppState == AS_REPLAY ) return;
     
-    if( button == MBLeft ) ActMouseButton( down );
+    if( button == MBLeft ) m_bIsMouseDown = down;
 
     Redraw();
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::ActMouseButton( bool down )
-{
-    m_bIsMouseDown = down;
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnMouseMove( int x, int y )
-{
-    // Skip mouse input on replay
-    if( m_AppState == AS_REPLAY ) return;
-    if( m_AppState == AS_RECORD )
-    {
-        m_RecData.x = x;
-        m_RecData.y = y;
-    }
-
-    ActMouseMove( x, y );
-
-    Redraw();
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::ActMouseMove( int x, int y )
 {
     // Dont act if camera follows a ball
     if( m_bBallCamActive ) return;
@@ -325,10 +201,8 @@ void MainWindow::ActMouseMove( int x, int y )
         const float pcX = float(m_fAccumX) / Width();
         const float pcY = -float(m_fAccumY) / Height();
 
-        const float cubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
-        const float cubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
-
-        //MainApp::GetPhysics().SetCubeAngles( cubeHorizontalAngle, cubeVerticalAngle );
+        m_fCubeHorizontalAngle = ROTATION_SPEED * pcX * DEG_TO_RAD;
+        m_fCubeVerticalAngle   = ROTATION_SPEED * pcY * DEG_TO_RAD;
 
         m_fAccumX += dX;
         m_fAccumY += dY;
@@ -336,43 +210,23 @@ void MainWindow::ActMouseMove( int x, int y )
     else {
         m_fAccumX = 0.0f;
         m_fAccumY = 0.0f;
+
+        m_fCubeHorizontalAngle = 0.0f;
+        m_fCubeVerticalAngle   = 0.0f;
     }
 
     m_iMouseX = x;
     m_iMouseY = y;
-}
 
-//-----------------------------------------------------------------------------
-void MainWindow::RestartClockFromFile()
-{
-    //MainApp::GetPhysics().RestartClockFromFile();
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::RestartClock()
-{
-    //MainApp::GetPhysics().RestartClock();
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::Reset()
-{
-    //MainApp::GetPhysics().SetReset();
+    Redraw();
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::OnDestroy()
 {
-    if( m_AppState == AS_RECORD ) {
-        InputRec::Get().End(); // Stop recoding
-    }
-
-    MainApp::GetClient().Terminate();
+    MainApp::GetClientSend().Terminate();
+    MainApp::GetClientRecv().Terminate();
     MainApp::GetBitmap().Terminate();
-
-    //Clock::Destroy();
-    InputRec::Destroy();
-    InputReplay::Destroy();
 }
 
 //-----------------------------------------------------------------------------
@@ -397,24 +251,21 @@ void MainWindow::PrintStats()
     float deltaY = 0.05f, startY = 1.0f;
     #define TEXT_Y startY-=deltaY
 
-    //glRasterPos2f( -1.0f, TEXT_Y );
-    //Printf( "Delta: %.4f", (float)Clock::Get().GetTimeDelta() );
-
-    //int smallspheres, bigspheres;
-    //MainApp::GetPhysics().GetNumOfSpheres( smallspheres, bigspheres );
-    //glRasterPos2f( -1.0f, TEXT_Y );
-    //Printf( "Big spheres: %i", bigspheres );
-    //glRasterPos2f( -1.0f, TEXT_Y );
-    //Printf( "Small Spheres: %i", smallspheres );
-    //
-    //glRasterPos2f( -1.0f, TEXT_Y );
-    //string gamestate("Normal");
-    //switch(m_AppState)
-    //{
-    //case AS_RECORD: gamestate = "Record"; break;
-    //case AS_REPLAY: gamestate = "Replay"; break;
-    //}
-    //Printf( "Gamestate: %s", gamestate.c_str() );
+    int smallspheres, bigspheres;
+    MainApp::Get().GetNumOfSpheres( smallspheres, bigspheres );
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "Big spheres: %i", bigspheres );
+    glRasterPos2f( -1.0f, TEXT_Y );
+    Printf( "Small Spheres: %i", smallspheres );
+    
+    glRasterPos2f( -1.0f, TEXT_Y );
+    string gamestate("Normal");
+    switch(m_AppState)
+    {
+    case AS_RECORD: gamestate = "Record"; break;
+    case AS_REPLAY: gamestate = "Replay"; break;
+    }
+    Printf( "Gamestate: %s", gamestate.c_str() );
 
     //if( m_bShowControls )
     //{
