@@ -11,23 +11,34 @@ void InputMap::_Clear()
     memset( &m_data, 0, sizeof(input_t) );
 }
 
+// ----------------------------------------------------------------------------
 bool InputMap::Get( input_t &data ) const
+{
+    if( IsReadable() )
+    {
+        __TRY { data = m_data; }
+        __FINALLY { ReleaseWrite(); }
+        return true;
+    }
+
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+void InputMap::AccumInput(const input_t &data)
 {
     if( IsReadable() )
     {
         __TRY 
         { 
-           data = m_data;
+            for(int i=0; i<256; i++)
+                m_data.keys[i] = m_data.keys[i] || data.keys[i];
         }
         __FINALLY 
         {
             ReleaseWrite();
         }
-
-        return true;
     }
-
-    return false;
 }
 
 // ----------------------------------------------------------------------------

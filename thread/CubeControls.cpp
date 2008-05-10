@@ -44,6 +44,26 @@ bool CubeAngles::Set( float horizontal, float vertical )
     return false;
 }
 
+bool CubeAngles::Add( float horizontal, float vertical )
+{
+    if( IsWritable() )
+    {
+        __TRY 
+        { 
+           m_fHorizontal += horizontal;
+           m_fVertical += vertical;
+        }
+        __FINALLY 
+        {
+            ReleaseAll();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 #else
 
 bool CubeAngles::Get( float &horizontal, float &vertical ) const

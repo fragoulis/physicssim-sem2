@@ -1,12 +1,11 @@
 #include "../MainApp.h"
 #include "../Network/CPacket.h"
 #include "CServerThread.h"
-#include "ClientMutex.h"
 
 #include <fstream>
 using namespace std;
 
-ofstream dout("serverdump.txt");
+extern ofstream dout;
 extern ofstream dout2;
 
 // -----------------------------------------------------------------------------
@@ -14,44 +13,56 @@ void CServerThread::Run( void *lpArgs )
 {
     CPacket packet;
 
+    FD_ZERO (&m_masks);
+    
+    timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+
     while(IsRunning())
     {
-        if( !ClientMutex::clients.empty() )
-        {
-            MainApp::Get().WritePacket(packet);
-            MainApp::Get().GetPhysics().WritePacket(packet);
+        if( m_masks.fd_count==0 ) continue;
 
-            //if( ClientMutex::IsWritable() )
+        fd_set readMasks = m_masks;
+
+        if( select(0, &readMasks, NULL, NULL, &timeout) < 0 ) {
+            dout2 << "Server port error: " << WSAGetLastError() << endl;
+			break;
+		}
+
+        Streams::iterator iter = m_clients.begin();
+        for(int cnt=0; iter != m_clients.end(); cnt++)
+        {
+            SocketStream *stream = *iter;
+            if( !stream->isValid() ) {
+                iter = m_clients.erase(iter);
+                dout2 << "Removing invalid client[" << cnt << "]" << std::endl;
+            }
+            else
             {
-                Streams::iterator iter = ClientMutex::clients.begin();
-                for(; iter != ClientMutex::clients.end(); )
+                if( FD_ISSET(stream->handle(), &readMasks) )
                 {
-                    SocketStream *stream = *iter;
-	                if( !stream->isValid() )
-                    {
-                        ClientMutex::clients.erase(iter);
-                        dout2 << "Removing invalid client" << std::endl;
+                    // recieve data
+                    int ret = packet.recv(*stream);
+                    if( ret == 0 ) {
+                        dout2 << "Closing recv client[" << cnt << "]" << std::endl;
+                        stream->close();
                     }
-                    else
-                    {
-                        ++iter;
-                    
-                        // send data
-                        stream->send(packet.buffer(), packet.size());
+                    else if( ret == SOCKET_ERROR ) {
+                        dout2 << "recieving error " << WSAGetLastError() << " from client[" << cnt << "]" << std::endl;
+                    } else {
+                        MainApp::Get().GetPhysics().ReadPacket(packet);
+                        packet.reset();
                     }
                 }
+                else
+                    dout2 << "Unknown FD client[" << cnt << "]" << std::endl;
 
-                // clear buffer
-                packet.reset();
+                ++iter;
+            }
 
-                //ClientMutex::ReleaseAll();
+        } // for( .. )
 
-            } // if ( )
-
-        } // if( !.. )
-
-        // sleep for a while
-        Sleep(10);
-    }
+    } // while( .. )
 
 } // Run()

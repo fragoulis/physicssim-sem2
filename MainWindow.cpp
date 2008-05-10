@@ -81,9 +81,8 @@ void MainWindow::OnCreate()
     m_Lights[0].TurnOn();
 
     MainApp::GetPhysics().Start(); // Safely start the physics thread
-    MainApp::GetBitmap().Start();
+    //MainApp::GetBitmap().Start();
     MainApp::GetListener().Start();
-    MainApp::GetServer().Start();
 }
 
 //-----------------------------------------------------------------------------
@@ -371,7 +370,6 @@ void MainWindow::OnDestroy()
         InputRec::Get().End(); // Stop recoding
     }
 
-    MainApp::GetServer().Terminate();
     MainApp::GetListener().Terminate();
     MainApp::GetPhysics().Terminate();
     MainApp::GetBitmap().Terminate();

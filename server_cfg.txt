@@ -12,6 +12,7 @@ damp        0.4
 drag        0.2
 
 .Server
-clients     10
+clients     100
 hostname    127.0.0.1
-port        2100
+sendPort    2100
+recvPort    2101

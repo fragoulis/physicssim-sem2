@@ -39,7 +39,6 @@ private:
     bool m_bReset;
     bool m_bRestartClockFromFile;
     bool m_bRestartClock;
-    input_t m_input;
     CubeControls m_cube;
 
 public:
@@ -69,6 +68,7 @@ public:
     CGameObject* GetPlane(int index) { return m_Planes[index]; }
 
     void WritePacket( CPacket &packet );
+    void ReadPacket( CPacket &packet );
 
 private:
     virtual void OnStart();

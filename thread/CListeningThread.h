@@ -1,10 +1,9 @@
 #pragma once
 #include "../Network/WSA.h"
 #include "../Network/SocketAcceptor.h"
-#include "IThread.h"
+#include "CServerThread.h"
+#include "CSendThread.h"
 #include "../Util/TFreelist.h"
-#include <string>
-#include <vector>
 using namespace tlib;
 using namespace std;
 
@@ -12,11 +11,15 @@ class CListeningThread : public IThread
 {
 private:
     typedef TFreelist<SocketStream> Sockets;
-    Sockets m_clients;
+    Sockets m_clientPool;
     string m_hostname;
-    string m_port;
+    string m_sendPort, m_recvPort;
+
+    CServerThread m_recv;
+    CSendThread m_send;
 
 private:
     virtual void Run( void *lpArgs );
     virtual void OnStart();
+    virtual void OnEnd();
 };
