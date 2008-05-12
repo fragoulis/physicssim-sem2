@@ -58,13 +58,18 @@ private:
 
 public:
     CPacket():
-    m_tries(3)
+    m_tries(100)
     { 
         m_buffer = new char[DEFAULT_BUFFER_ALLOC];
         reset(); 
     }
 
     ~CPacket() { delete[] m_buffer; }
+
+    // ------------------------------------------------------------------------
+    //const char* buffer() const { return m_buffer; }
+    int size() const { return m_index; }
+    int realSize() const { return m_realSize; }
 
     // ------------------------------------------------------------------------
     template<class Type>
@@ -102,29 +107,58 @@ public:
         m_index += size;
     }
 
-    // ------------------------------------------------------------------------
-    const char* buffer() const { return m_buffer; }
-    int size() const { return m_index; }
-    int realSize() const { return m_realSize; }
-
     void setSize( int size ) { m_realSize = size; }
 
     // ------------------------------------------------------------------------
     void reset() 
     {
-        m_index = 0;
+        m_index = sizeof(int);	// the first four bytes are reserved to hold the structure size
         m_realSize = 0;
         memset( m_buffer, 0, DEFAULT_BUFFER_ALLOC );
     }
 
+	// ------------------------------------------------------------------------
     int recv(SocketStream &ss)
     {
-        for( int i=0; (i<m_tries) && (m_realSize<DEFAULT_BUFFER_ALLOC); i++ ) {
-		    int bytes = ss.recv(&m_buffer[m_realSize], DEFAULT_BUFFER_ALLOC);
-            if(bytes == SOCKET_ERROR) return SOCKET_ERROR;
-            m_realSize += bytes;
+		readSize(ss);
+
+		int bytesRead = 0;
+		int i;
+        for( i=0; (i<m_tries) && bytesRead<m_realSize; i++ ) {
+		    bytesRead += ss.recv(&m_buffer[bytesRead+m_index], m_realSize-bytesRead);
 	    }
 
-        return m_realSize;
+        return bytesRead;
+    }
+
+	// ------------------------------------------------------------------------
+	int send(SocketStream &ss, bool bfinalize = false)
+	{
+		if(bfinalize) finalize();
+
+		int bytesSent = 0;
+		int i;
+		for( i=0; (i<m_tries) && bytesSent < size(); i++ ) {
+			bytesSent += ss.send(&m_buffer[bytesSent], size()-bytesSent);
+		}
+
+		return bytesSent;
+	}
+
+	// ------------------------------------------------------------------------
+	void finalize()
+	{
+		*(int*)&m_buffer[0] = m_index-sizeof(int);
+	}
+
+private:
+	// ------------------------------------------------------------------------
+    bool readSize(SocketStream &ss)
+    {
+		if( ss.recv(&m_buffer[0], m_index) < m_index ) return false;
+
+		m_realSize = *(int*)&m_buffer[0];
+
+		return true;
     }
 };

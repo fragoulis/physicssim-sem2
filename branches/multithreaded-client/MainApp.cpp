@@ -5,6 +5,7 @@
 #include "Util/Config.h"
 #include "CSceneManager.h"
 #include "GOCS/CGOCManager.h"    // The component manager
+#include "Util/CLogger.h"
 
 static MainApp g_MainApp;
 
@@ -126,7 +127,8 @@ void MainApp::ReadPacket( CPacket &packet )
 void MainApp::WritePacket( CPacket &packet )
 {
     input_t myinput;
-    m_input.Get(myinput);
+    if( !m_input.Get(myinput) )
+		_LOG("Failed to read input in order to write the packet!!!");
 
     // push general keyboard input
     packet.push<bool>(myinput.keys, sizeof(myinput.keys));
@@ -135,7 +137,8 @@ void MainApp::WritePacket( CPacket &packet )
     packet.push<float>(m_tMain.GetAngleX());
     packet.push<float>(m_tMain.GetAngleY());
 
-    m_input.Clear();
+    if( !m_input.Clear() )
+		_LOG("Failed to clear input after sending");
 } 
 
 // ----------------------------------------------------------------------------
@@ -151,6 +154,7 @@ void MainApp::OnCreate()
     InitPlanes();
     InitCloth();
     InitShelf();
+	InitFloor();
 }
 
 // ----------------------------------------------------------------------------
@@ -166,6 +170,7 @@ void MainApp::OnDestroy()
     // Delete other objects
     delete m_Cloth;
     delete m_Shelf;
+	delete m_Floor;
 
     CGOCManager::Destroy();
     MGRScene::Destroy();
@@ -204,6 +209,8 @@ void MainApp::AddBigSphere()
         __TRY { ADD_GOC( pSphere, "VisualBigSphere" ); }
         __FINALLY { ObjectMutex::ReleaseAll(); }
     }
+	else 
+		cout << "Big Sphere timeout!!!" << endl;
 
     m_Spheres.push_back(pSphere);
     m_LastSphere = pSphere;
@@ -217,7 +224,8 @@ void MainApp::AddSmallSphere()
     {
         __TRY { ADD_GOC( pSphere, "VisualSmallSphere" ); }
         __FINALLY { ObjectMutex::ReleaseAll(); }
-    }
+    }else 
+		cout << "Small Sphere timeout!!!" << endl;
 
     m_Spheres.push_back(pSphere);
     m_LastSphere = pSphere;
@@ -356,6 +364,18 @@ void MainApp::InitPlanes()
     m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, POSITION );
     m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI), Vec3f( 0.0f, 1.0f, 0.0f ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
+}
+
+// ----------------------------------------------------------------------------
+void MainApp::InitFloor()
+{
+	Quatf qOri( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+	qOri.FromSelf();
+
+	m_Floor = new CGameObject("Floor");
+	m_Floor->SetPosition( Vec3f( 0.0f, -1.0f, -1.0f ) );
+    m_Floor->SetOrientation( qOri );
+    ADD_GOC( m_Floor, "VisualPlane" );
 }
 
 // ----------------------------------------------------------------------------
