@@ -9,12 +9,14 @@ using tlib::physics::CollisionDetector;
 
 IGOCBoundingVolume::IGOCBoundingVolume():
 m_fElasticity(1.0f),
-m_fFriction(0.0f)
+m_fFriction(0.0f),
+m_PhysicsGOC(0)
 {}
 
 IGOCBoundingVolume::IGOCBoundingVolume( const IGOCTBounding * const tpl ):
 m_fElasticity(tpl->GetElasticity()),
-m_fFriction(tpl->GetFriction())
+m_fFriction(tpl->GetFriction()),
+m_PhysicsGOC(0)
 {}
 
 IGOCBoundingVolume::~IGOCBoundingVolume()
