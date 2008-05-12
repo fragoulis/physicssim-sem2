@@ -3,12 +3,10 @@
 #include "CRecvThread.h"
 #include "../MainApp.h"
 #include "../Util/Config.h"
-#include "../Util/assert.h"
+#include "../Util/CLogger.h"
 
 #include <fstream>
 using namespace std;
-
-ofstream dout2("recvdump.txt");
 
 // ----------------------------------------------------------------------------
 void CRecvThread::OnStart()
@@ -38,44 +36,54 @@ void CRecvThread::Run( void *lpArgs )
 
 	while(IsRunning())
     {
-        FD_ZERO (&readMasks);
-	    FD_SET (client.handle(), &readMasks);
+		if( isOpen )
+		{
+			FD_ZERO (&readMasks);
+			FD_SET (client.handle(), &readMasks);
 
-        int ret = select(0, &readMasks, NULL, NULL, &timeout);
-        if( ret == SOCKET_ERROR )
-        {
-            dout2 << "Socket error: " << WSAGetLastError() << endl;
-            isOpen = false;
-        }
+			int ret = select(0, &readMasks, NULL, NULL, &timeout);
+			if( ret == SOCKET_ERROR )
+			{
+				int err;
+				int errlen = sizeof(err);
+				getsockopt(client.handle(), SOL_SOCKET, SO_ERROR, (char*)&err, &errlen);
+				cout << "Socket error: " << err << endl;
+				client.close();
+				isOpen = false;
+			}
+		}
 
-        if( !isOpen ) 
+		if( !isOpen ) 
         {
             // connect to server
-            dout2 << "Trying to connect... ";
             isOpen = client.open(connection);
-            dout2 << (isOpen?"established":"failed");
-            if( !isOpen ) dout2 << WSAGetLastError() << endl;
-            else dout2 << endl;
+			if(isOpen) {
+				_LOG("Trying to connect... connected");
+			} else {
+				_LOG("Trying to connect... failed");
+			}
         }
         else if( FD_ISSET(client.handle(), &readMasks) )
         {
             // read what is in the socket
-            int ret = packet.recv(client);
-            if( ret == 0 ) {
-                dout2 << "recieving ZERO from server" << std::endl;
-            }
-            else if( ret == SOCKET_ERROR ) {
-                dout2 << "recieving error " << WSAGetLastError() << " from server" << std::endl;
-                //client.close();
-                isOpen = false;
-            }
-            else {
-                MainApp::Get().ReadPacket(packet);
-                packet.reset();
+			packet.reset();
+			int bytes = packet.recv(client);
+			if( bytes <= 0 ) {
+				_LOG("Error: recieving packet from server to client");
+				client.close();
+				isOpen = false;
+			}
+			else {
+				if( packet.realSize() == bytes ) {
+					MainApp::Get().ReadPacket(packet);
+				}
+				else
+					_LOG("Error: packet from server was corrupted");
             }
         }
-        else
-            dout2 << "Unknown FD. isOpen=" << isOpen << endl;
-    }
+
+		Sleep(10);
+
+    } // while( )
 
 } // Run()

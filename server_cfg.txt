@@ -13,6 +13,6 @@ drag        0.2
 
 .Server
 clients     10
-hostname    127.0.0.1
-sendPort    2101
-recvPort    2100
+hostname    150.237.94.51
+sendPort    2002
+recvPort    2001

@@ -40,6 +40,7 @@ private:
     CGameObject *m_Planes[MAX_PLANES];
     CGameObject *m_Cloth;
     CGameObject *m_Shelf;
+	CGameObject *m_Floor;
 
     InputMap m_input;
 
@@ -70,6 +71,7 @@ public:
     void InitPlanes();
     void InitCloth();
     void InitShelf();
+	void InitFloor();
 
     // Control functions
     void AddBigSphere();

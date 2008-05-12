@@ -5,6 +5,8 @@ struct input_t
 {
     bool keys[256];
     bool mbutton;
+
+	input_t() { memset( this, 0, sizeof(input_t) ); }
 };
 
 namespace tlib
@@ -15,6 +17,7 @@ class InputMap : public CMutex
 public:
     InputMap();
     bool Get( input_t &data ) const;
+    void AccumInput(const input_t &data);
     bool Clear();
 
     bool SetMButton( bool mbutton );

@@ -111,7 +111,10 @@ void MainWindow::OnKeyboard( int key, bool down )
     case 'f':
     case 'v':
     case 'c': break;
-    default: MainApp::Get().SetKey(key, down); break;
+    default: 
+		if( !MainApp::Get().SetKey(key, true) )
+			_LOG("Failed to set key in client on OnKeyboard");
+		break;
     }
 
     if( down ) return;
