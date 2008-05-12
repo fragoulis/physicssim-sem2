@@ -28,7 +28,7 @@ public:
     static CListeningThread& GetListener() { return m_tListener; }
     bool GetInput( input_t &data ) const { return m_input.Get( data ); }
     bool ClearInput() { return m_input.Clear(); }
-    void AccumInput(const input_t &data) { m_input.AccumInput(data); }
+    bool AccumInput(const input_t &data) { return m_input.AccumInput(data); }
     bool SetMButton( bool down ) { return m_input.SetMButton( down ); }
     bool SetKey( int index, bool state ) { return m_input.SetKey( index, state ); }
 

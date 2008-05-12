@@ -8,6 +8,7 @@
 #include "../ObjectMutex.h"
 #include "../goc_includes.h"
 #include "../Network/CPacket.h"
+#include "../CSceneManager.h"
 
 using namespace tlib::math;
 using namespace tlib::time;
@@ -20,7 +21,8 @@ m_bPause(false),
 m_bReset(false),
 m_bRestartClockFromFile(false),
 m_bRestartClock(false),
-m_LastSphere(0)
+m_LastSphere(0),
+m_bIsReady(false)
 {}
 
 //-----------------------------------------------------------------------------
@@ -70,7 +72,7 @@ void CPhysicsThread::HandleInput()
     MainApp::Get().GetInput( myinput );
 
     // Handles all controls except general and replay
-    if( DOWN('0') ) m_bReset = true;
+	if( DOWN('0') ) m_bReset = true;
     if( DOWN('p') ) m_bPause = !m_bPause;
     if( DOWN(187) ) MGRPhysics::Get().MultTimeStep(2.0f); // '='
     else if( DOWN(189) ) MGRPhysics::Get().MultTimeStep(0.5f); // '-'
@@ -100,12 +102,15 @@ void CPhysicsThread::OnStart()
     InitPlanes();
     InitCloth();
     InitShelf();
+	InitFloor();
 
     for( int i=0; i<0; i++ )
     {
         AddBigSphere();
         AddSmallSphere();
     }
+
+	m_bIsReady = true;
 }
 
 // ----------------------------------------------------------------------------
@@ -123,6 +128,7 @@ void CPhysicsThread::OnEnd()
     // Delete other objects
     delete m_Cloth;
     delete m_Shelf;
+	delete m_Floor;
 }
 
 // ----------------------------------------------------------------------------
@@ -175,12 +181,22 @@ void CPhysicsThread::ReadPacket( CPacket &packet )
 {
     input_t myinput;
     packet.pull<bool>(myinput.keys, sizeof(myinput.keys));
-    MainApp::Get().AccumInput(myinput);
-
+	
+    if( !MainApp::Get().AccumInput(myinput) )
+		_LOG("Failed to accumulate input from client!!!");
+	
     float angleX, angleY;
     packet.pull<float>(angleX);
     packet.pull<float>(angleY);
-    m_cube.AddAngles(angleX, angleY);
+
+	const float rotCeil = 0.4f;
+	if(angleX > rotCeil) angleX = rotCeil;
+	else if(angleX < -rotCeil) angleX = -rotCeil;
+	if(angleY > rotCeil) angleY = rotCeil;
+	else if(angleY < -rotCeil) angleY = -rotCeil;
+
+    if( !m_cube.AddAngles(angleX,angleY) )
+		_LOG("Failed to accumulate cube angles!!!");
 }
 
 // ----------------------------------------------------------------------------
@@ -253,7 +269,6 @@ void CPhysicsThread::RotateCube( float delta )
     if( m_cube.horizontalAngle == 0.0f &&
         m_cube.verticalAngle == 0.0f ) 
         return;
-    //std::cerr << "Rotating " << m_cube.horizontalAngle << " -- " << m_cube.verticalAngle << std::endl;
 
     Quatf qHRot, qVRot;
     qHRot.FromVector( m_cube.horizontalAngle * delta, Vec3f( 0.0f, 0.0f, 1.0f ) );
@@ -550,60 +565,77 @@ void CPhysicsThread::InitPlanes()
     // TODO: Read all values from config file
 
     const float POSITION = 0.5f;
+	Quatf qOri;
 
     // Back plane
     int iP = 0;
     m_Planes[iP] = new CGameObject("Backplane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, -POSITION );
+    m_Planes[iP]->SetPosition( Vec3f( 0.0f, 0.0f, -POSITION ) );
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Left plane
     ++iP;
     m_Planes[iP] = new CGameObject("Plane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( -POSITION, 0.0f, 0.0f );
-    m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    m_Planes[iP]->SetPosition( Vec3f( -POSITION, 0.0f, 0.0f ) );
+    qOri.FromVector( float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+	m_Planes[iP]->SetOrientation(qOri);
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Right plane
     ++iP;
     m_Planes[iP] = new CGameObject("Plane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( POSITION, 0.0f, 0.0f );
-    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    m_Planes[iP]->SetPosition( Vec3f( POSITION, 0.0f, 0.0f ) );
+    qOri.FromVector( -float(M_PI_2), Vec3f( 0.0f, 1.0f, 0.0f ) );
+	m_Planes[iP]->SetOrientation(qOri);
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Top plane
     ++iP;
     m_Planes[iP] = new CGameObject("Plane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, POSITION, 0.0f );
-    m_Planes[iP]->GetTransform().GetOrientation().FromVector( float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    m_Planes[iP]->SetPosition( Vec3f( 0.0f, POSITION, 0.0f ) );
+    qOri.FromVector( float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+	m_Planes[iP]->SetOrientation(qOri);
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Bottom plane
     ++iP;
     m_Planes[iP] = new CGameObject("Plane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, -POSITION, 0.0f );
-    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+    m_Planes[iP]->SetPosition( Vec3f( 0.0f, -POSITION, 0.0f ) );
+    qOri.FromVector( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+	m_Planes[iP]->SetOrientation(qOri);
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
 
     // Front plane
     ++iP;
     m_Planes[iP] = new CGameObject("Plane");
-    m_Planes[iP]->GetTransform().GetPosition().Set( 0.0f, 0.0f, POSITION );
-    m_Planes[iP]->GetTransform().GetOrientation().FromVector( -float(M_PI), Vec3f( 0.0f, 1.0f, 0.0f ) );
+    m_Planes[iP]->SetPosition( Vec3f( 0.0f, 0.0f, POSITION ) );
+    qOri.FromVector( -float(M_PI), Vec3f( 0.0f, 1.0f, 0.0f ) );
+	m_Planes[iP]->SetOrientation(qOri);
     ADD_GOC( m_Planes[iP], "VisualPlane" );
     ADD_GOC( m_Planes[iP], "BoundingPlane" );
+}
+
+// ----------------------------------------------------------------------------
+void CPhysicsThread::InitFloor()
+{
+	Quatf qOri( -float(M_PI_2), Vec3f( 1.0f, 0.0f, 0.0f ) );
+	qOri.FromSelf();
+
+	m_Floor = new CGameObject("Floor");
+	m_Floor->SetPosition( Vec3f( 0.0f, -1.0f, -1.0f ) );
+    m_Floor->SetOrientation( qOri );
+    ADD_GOC( m_Floor, "VisualPlane" );
 }
 
 // ----------------------------------------------------------------------------
 void CPhysicsThread::InitCloth()
 {
     // TODO: Read all values from config file
-
     m_Cloth = new CGameObject("Cloth");
     m_Cloth->GetTransform().GetPosition().Set( -0.25f, 0.0f, 0.0f );
     //m_Cloth->GetTransform().GetPosition().Set( 0.0f, 0.4f, 0.0f );
@@ -617,7 +649,6 @@ void CPhysicsThread::InitCloth()
 void CPhysicsThread::InitShelf()
 {
     // TODO: Read all values from config file
-
     m_Shelf = new CGameObject("Shelf");
     m_Shelf->Deactivate();
     m_Shelf->GetTransform().GetPosition().Set( -0.25f, 0.0f, 0.0f );

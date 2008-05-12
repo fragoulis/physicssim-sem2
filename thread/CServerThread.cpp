@@ -1,12 +1,12 @@
 #include "../MainApp.h"
 #include "../Network/CPacket.h"
 #include "CServerThread.h"
+#include "../Util/CLogger.h"
 
 #include <fstream>
 using namespace std;
 
 extern ofstream dout;
-extern ofstream dout2;
 
 // -----------------------------------------------------------------------------
 void CServerThread::Run( void *lpArgs )
@@ -21,48 +21,70 @@ void CServerThread::Run( void *lpArgs )
 
     while(IsRunning())
     {
-        if( m_masks.fd_count==0 ) continue;
 
-        fd_set readMasks = m_masks;
-
-        if( select(0, &readMasks, NULL, NULL, &timeout) < 0 ) {
-            dout2 << "Server port error: " << WSAGetLastError() << endl;
-			break;
-		}
-
-        Streams::iterator iter = m_clients.begin();
-        for(int cnt=0; iter != m_clients.end(); cnt++)
+		if( !m_clients.empty() )
         {
-            SocketStream *stream = *iter;
-            if( !stream->isValid() ) {
-                iter = m_clients.erase(iter);
-                dout2 << "Removing invalid client[" << cnt << "]" << std::endl;
-            }
-            else
-            {
-                if( FD_ISSET(stream->handle(), &readMasks) )
-                {
-                    // recieve data
-                    int ret = packet.recv(*stream);
-                    if( ret == 0 ) {
-                        dout2 << "Closing recv client[" << cnt << "]" << std::endl;
-                        stream->close();
-                    }
-                    else if( ret == SOCKET_ERROR ) {
-                        dout2 << "recieving error " << WSAGetLastError() << " from client[" << cnt << "]" << std::endl;
-                    } else {
-                        MainApp::Get().GetPhysics().ReadPacket(packet);
-                        packet.reset();
-                    }
-                }
-                else
-                    dout2 << "Unknown FD client[" << cnt << "]" << std::endl;
+			fd_set readMasks = m_masks;
 
-                ++iter;
-            }
+			int sel = select(0, &readMasks, NULL, NULL, &timeout);
+			if( sel < 0 ) {
+				dout << "Server port error: " << WSAGetLastError() << endl;
+			}
 
-        } // for( .. )
+			Streams::iterator iter = m_clients.begin();
+			while(iter != m_clients.end())
+			{
+				SocketStream *stream = *iter;
+				if( !stream->isValid() ) {
+					dout << "SocketRecv deleted" << endl;
+					delete stream; stream = 0;
+					iter = m_clients.erase(iter);
+				}
+				else
+				{
+					if( FD_ISSET(stream->handle(), &readMasks) )
+					{
+						// recieve data
+						packet.reset();
+						int bytes = packet.recv(*stream);
+						if( bytes <= 0 ) {
+							dout << "SocketRecv(" << stream->handle() << ") closing due to error" << endl;
+							stream->close();
+							//FD_CLR(stream->handle(), &m_masks);
+						}
+						else {
+							if( packet.realSize() == bytes ) {
+								MainApp::Get().GetPhysics().ReadPacket(packet);
+							}
+							else
+								_LOG("Error: packet from client was corrupted");
+						}
+					}
+
+					++iter;
+				}
+
+			} // for( .. )
+
+		} // if( client )...
+
+		Sleep(1);
 
     } // while( .. )
 
 } // Run()
+
+
+// -----------------------------------------------------------------------------
+void CServerThread::OnEnd()
+{
+	dout << __FUNCTION__ << endl;
+	Streams::iterator iter = m_clients.begin();
+    for(; iter != m_clients.end(); ++iter )
+    {
+		dout << "SocketRecv(" << (*iter)->handle() << ") deleted" << endl;
+		delete *iter;
+		*iter = 0;
+	}
+	m_clients.clear();
+}

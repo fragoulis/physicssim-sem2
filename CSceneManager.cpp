@@ -7,6 +7,7 @@
 #include "CMaterialManager.h"
 #include "CVertexArrayManager.h"
 #include "ObjectMutex.h"
+#include "Util/CLogger.h"
 #include <algorithm>
 using namespace tlib;
 using tlib::gocs::IGOCVisual;
@@ -36,6 +37,13 @@ void CSceneManager::Init()
     MGRTexture::_Get();
     MGRMaterial::_Get();
     MGRVertexArray::_Get().Init();
+
+	// Preload textures we are using :P
+	MGRTexture::Get().GetTexture("source/images/fiberglass.jpg");
+	MGRTexture::Get().GetTexture("source/images/bubbles-large.jpg");
+	MGRTexture::Get().GetTexture("source/images/cloth.jpg");
+	MGRTexture::Get().GetTexture("source/images/metal01-large.jpg");
+	MGRTexture::Get().GetTexture("source/images/floor.jpg");
 }
 
 // ----------------------------------------------------------------------------
@@ -47,21 +55,31 @@ void CSceneManager::Register( gocs::IGOCVisual *pVisComp )
         { 
             if( pVisComp->GetOwner()->Is("BigSphere") ) {
                 m_BigSpheres.push_back( pVisComp );
+				_LOG("Registering big sphere");
             }
             else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
                 m_SmallSpheres.push_back( pVisComp );
+				_LOG("Registering small sphere");
             }
             else if( pVisComp->GetOwner()->Is("Plane") ) {
                 m_Walls.push_back( pVisComp );
+				_LOG("Registering wall");
             }
             else if( pVisComp->GetOwner()->Is("Backplane") ) {
                 m_Backplane = pVisComp;
+				_LOG("Registering backwall");
             }
             else if( pVisComp->GetOwner()->Is("Cloth") ) {
                 m_Cloth = pVisComp;
+				_LOG("Registering cloth");
             }
             else if( pVisComp->GetOwner()->Is("Shelf") ) {
                 m_Shelf = pVisComp;
+				_LOG("Registering shelf");
+            }
+			else if( pVisComp->GetOwner()->Is("Floor") ) {
+                m_Floor = pVisComp;
+				_LOG("Registering floor");
             }
             else {
                 fassert("Adding a visual component with invalid object id");
@@ -86,21 +104,31 @@ void CSceneManager::Unregister( gocs::IGOCVisual *pVisComp )
         { 
             if( pVisComp->GetOwner()->Is("BigSphere") ) {
                 FIND_AND_ERASE(m_BigSpheres, pVisComp);
+				_LOG("Unregistering big sphere");
             }
             else if( pVisComp->GetOwner()->Is("SmallSphere") ) {
                 FIND_AND_ERASE(m_SmallSpheres, pVisComp);
+				_LOG("Unregistering small sphere");
             }
             else if( pVisComp->GetOwner()->Is("Plane") ) {
                 FIND_AND_ERASE(m_Walls, pVisComp);
+				_LOG("Unregistering wall");
             }
             else if( pVisComp->GetOwner()->Is("Backplane") ) {
                 m_Backplane = 0;
+				_LOG("Unregistering backwall");
             }
             else if( pVisComp->GetOwner()->Is("Cloth") ) {
                 m_Cloth = 0;
+				_LOG("Unregistering cloth");
             }
             else if( pVisComp->GetOwner()->Is("Shelf") ) {
                 m_Shelf = 0;
+				_LOG("Unregistering shelf");
+            }
+			else if( pVisComp->GetOwner()->Is("Floor") ) {
+                m_Floor = 0;
+				_LOG("Unregistering floor");
             }
             else {
                 fassert("Removing a visual component with invalid object id");
@@ -173,6 +201,24 @@ void CSceneManager::Render() const
 
     // Apply material
     MGRMaterial::Get().Apply(MGRMaterial::METAL);
+
+	// Render floor
+	{
+		uiTextureId = MGRTexture::Get().GetTexture("source/images/floor.jpg");
+		glBindTexture( GL_TEXTURE_2D, uiTextureId );
+		MGRVertexArray::Get().Begin("Floor");
+		float m[16];
+		const Quatf &vOri = m_Floor->GetOwner()->GetOrientation();
+		vOri.ToMatrix(m);
+	    
+		const Vec3f &vPos = m_Floor->GetOwner()->GetPosition();
+		glPushMatrix();
+			glTranslatef( vPos.x(), vPos.y(), vPos.z() );
+			glMultMatrixf(m);
+			MGRVertexArray::Get().Render();
+		glPopMatrix();
+		MGRVertexArray::Get().End();
+	}
 
     if( m_vizMutex.IsReadable() )
     {

@@ -31,7 +31,7 @@ private:
     
     //! List of visual components
     VisualList m_BigSpheres, m_SmallSpheres, m_Walls;
-    gocs::IGOCVisual *m_Cloth, *m_Shelf, *m_Backplane;
+    gocs::IGOCVisual *m_Cloth, *m_Shelf, *m_Backplane, *m_Floor;
 
     //! The scene is textured or not
     bool m_bTextured;

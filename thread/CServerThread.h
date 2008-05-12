@@ -15,6 +15,7 @@ private:
     SocketAcceptor *m_server;
 
     virtual void Run( void *lpArgs );
+	virtual void OnEnd();
 
 public:
     CServerThread():m_server(0) {}

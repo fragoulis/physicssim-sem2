@@ -1,48 +1,41 @@
 #include "../MainApp.h"
 #include "../Network/CPacket.h"
 #include "CSendThread.h"
+#include "../Util/CLogger.h"
 
 #include <fstream>
 using namespace std;
 
 extern ofstream dout;
-extern ofstream dout2;
-extern ofstream dout3;
 
 // -----------------------------------------------------------------------------
 void CSendThread::Run( void *lpArgs )
 {
     CPacket packet;
 
-    while(IsRunning())
+	while(IsRunning())
     {
         if( !m_clients.empty() )
         {
+            packet.reset();
             MainApp::Get().WritePacket(packet);
             MainApp::Get().GetPhysics().WritePacket(packet);
+			packet.finalize();
 
             Streams::iterator iter = m_clients.begin();
-            for(int cnt=0; iter != m_clients.end(); cnt++)
+            while(iter != m_clients.end())
             {
                 SocketStream *stream = *iter;
                 if( !stream->isValid() ) {
+					dout << "SocketSend deleted" << endl;
+					delete stream; stream = 0;
                     iter = m_clients.erase(iter);
                 }
                 else
-                {
-                    // send data
-                    int ret = stream->send(packet.buffer(), packet.size());
-                    if( ret == 0 ) {
-                        dout3 << "sent ZERO to server" << std::endl;
-                    }
-                    else if( ret == SOCKET_ERROR ) {
-                        int error = WSAGetLastError();
-                        if( WSAECONNABORTED == error ) {
-                            stream->close();
-                            dout3 << "closing send client[" << cnt << "]" << std::endl;
-                        }
-                        else
-                            dout3 << "sent error("<< error <<") on send client[" << cnt << "]" << std::endl;
+                {   
+					if( packet.send(*stream) < 0 ) {
+						dout << "SocketSend(" << stream->handle() << ") closing due to error" << endl;
+						stream->close();
                     }
 
                     ++iter;
@@ -50,14 +43,25 @@ void CSendThread::Run( void *lpArgs )
 
             } // for( .. )
 
-            // clear buffer
-            packet.reset();
-
         } // if( !.. )
 
         // sleep for a while
-        Sleep(25);
+        Sleep(10);
 
     } // while( .. )
 
 } // Run()
+
+// -----------------------------------------------------------------------------
+void CSendThread::OnEnd()
+{
+	dout << __FUNCTION__ << endl;
+	Streams::iterator iter = m_clients.begin();
+    for(; iter != m_clients.end(); ++iter ) 
+	{
+		dout << "SocketSend(" << (*iter)->handle() << ") deleted" << endl;
+		delete *iter;
+		*iter = 0;
+	}
+	m_clients.clear();
+}
