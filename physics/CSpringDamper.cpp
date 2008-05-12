@@ -1,9 +1,10 @@
 #include "CSpringDamper.h"
 #include "CParticle.h"
-#include "../Util/assert.h"
 using namespace tlib::physics;
 
 const float FORCE_LIMIT = 1500.0f;
+
+#define _USE_DAMPER
 
 CSpringDamper::CSpringDamper():
 m_Ks(100.0f),
@@ -15,7 +16,6 @@ void CSpringDamper::Compute()
     // Current length
     const Vec3f vDist = m_Particles[1]->GetPosition() - m_Particles[0]->GetPosition();
     const float fLength = vDist.Length();
-    //massert( fLength>0.0f, "Spring length cannot be negative or zero!" );
     Vec3f vNormal = vDist / fLength;
 
     // Spring force
@@ -24,21 +24,23 @@ void CSpringDamper::Compute()
     // Current velocities
     const Vec3f vVel = m_Particles[0]->GetVelocity() - m_Particles[1]->GetVelocity();
 
+#ifdef _USE_DAMPER
     // Damping force
     const float fDamper = m_Kd * vNormal.Dot( vVel );
 
     // Total spring-damper force
     Vec3f vTotal = ( fSpring - fDamper ) * vNormal;
-    //Vec3f vTotal = fSpring * vNormal;
+#else
+	Vec3f vTotal = fSpring * vNormal;
+#endif
 
-//#ifdef _DEBUG
-    //massert( vTotal.Length()<10.0f, "Too big force!" );
+#ifdef _DEBUG
     const float force = vTotal.SqrLength();
     if( force > FORCE_LIMIT )
     {
         vTotal *= 1.0f / force;
     }
-//#endif
+#endif
 
     // Apply to particles
     m_Particles[0]->AddForce( vTotal );
