@@ -58,6 +58,10 @@ void CPhysicsThread::Run( void *lpArgs )
         {
             RotateCube( delta );
             MGRPhysics::Get().Update( delta );
+
+			GOCBoundingDWBox *bnd = GET_OBJ_GOC( m_Cloth, GOCBoundingDWBox, "BoundingVolume" );
+			assert(bnd);
+			bnd->WrapObject();
         }
 
         Sleep(1);
@@ -74,8 +78,10 @@ void CPhysicsThread::HandleInput()
     // Handles all controls except general and replay
 	if( DOWN('0') ) m_bReset = true;
     if( DOWN('p') ) m_bPause = !m_bPause;
+#ifdef _DEBUG
     if( DOWN(187) ) MGRPhysics::Get().MultTimeStep(2.0f); // '='
     else if( DOWN(189) ) MGRPhysics::Get().MultTimeStep(0.5f); // '-'
+#endif
     if( !m_bPause )
     {
         if( DOWN('1') )
@@ -103,12 +109,6 @@ void CPhysicsThread::OnStart()
     InitCloth();
     InitShelf();
 	InitFloor();
-
-    for( int i=0; i<0; i++ )
-    {
-        AddBigSphere();
-        AddSmallSphere();
-    }
 
 	m_bIsReady = true;
 }
@@ -182,9 +182,10 @@ void CPhysicsThread::ReadPacket( CPacket &packet )
     input_t myinput;
     packet.pull<bool>(myinput.keys, sizeof(myinput.keys));
 	
-    if( !MainApp::Get().AccumInput(myinput) )
-		_LOG("Failed to accumulate input from client!!!");
-	
+	if( !MainApp::Get().AccumInput(myinput) ) {
+		_LOG("Failed to accumulate input from client!!!")
+	}
+
     float angleX, angleY;
     packet.pull<float>(angleX);
     packet.pull<float>(angleY);
@@ -195,8 +196,9 @@ void CPhysicsThread::ReadPacket( CPacket &packet )
 	if(angleY > rotCeil) angleY = rotCeil;
 	else if(angleY < -rotCeil) angleY = -rotCeil;
 
-    if( !m_cube.AddAngles(angleX,angleY) )
-		_LOG("Failed to accumulate cube angles!!!");
+	if( !m_cube.AddAngles(angleX,angleY) ) {
+		_LOG("Failed to accumulate cube angles!!!")
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -300,10 +302,6 @@ void CPhysicsThread::RotateCloth( const Quatf& qRot )
     GOCPhysicsCloth *physics = GET_OBJ_GOC( m_Cloth, GOCPhysicsCloth, "Physics" );
     assert(physics);
     physics->Rotate(qRot);
-
-    GOCBoundingDWBox *bnd = GET_OBJ_GOC( m_Cloth, GOCBoundingDWBox, "BoundingVolume" );
-    assert(bnd);
-    bnd->WrapObject();
 }
 
 // ----------------------------------------------------------------------------
