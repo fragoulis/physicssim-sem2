@@ -1,10 +1,10 @@
 .Physics_Attributes
 gravity		    -5.81
-timestep	    0.006
+timestep	    0.0004
 collision_stack 1000
 
 .Spring_Attributes
-spring		200.0
+spring		400.0
 damper		0.3
 
 .Particle_Attributes
@@ -12,7 +12,6 @@ damp        0.4
 drag        0.2
 
 .Server
-clients     100
 hostname    0.0.0.0
 sendPort    2001
 recvPort    2002

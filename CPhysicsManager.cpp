@@ -3,6 +3,7 @@
 #include "GOCS/Interfaces/IGOCPhysics.h"
 //#include "GOCS/Interfaces/IGOCBoundingVolume.h"
 #include "GOCS/GOCBoundingDeformable.h"
+#include "GOCS/CGameObject.h"
 #include "Util/CLogger.h"
 #include "Util/Config.h"
 #include "ObjectMutex.h"
