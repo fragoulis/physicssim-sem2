@@ -84,7 +84,7 @@ void MainWindow::OnCreate()
 
 	while( !MainApp::GetPhysics().IsReady() ) Sleep(10);
 
-    //MainApp::GetBitmap().Start();
+    MainApp::GetBitmap().Start();
     MainApp::GetListener().Start();
 }
 
