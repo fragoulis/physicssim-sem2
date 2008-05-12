@@ -21,6 +21,7 @@ private:
 public:
     GOCBoundingSphere( const GOCTBoundingSphere * const tpl );
 
+	virtual void Init();
     virtual ComponentId_t GetID() const {
         return CHash::_("BoundingSphere");
     }
