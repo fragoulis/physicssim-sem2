@@ -12,6 +12,8 @@ using tlib::physics::CSpringDamper;
 #include "../Util/Config.h"
 #include <cassert>
 
+#define _DONT_STICK_TO_EDGES
+
 GOCPhysicsCloth::GOCPhysicsCloth( const GOCTPhysicsCloth * const tpl ):
 m_Static(0)
 {
@@ -119,31 +121,9 @@ void GOCPhysicsCloth::Setup()
 void GOCPhysicsCloth::SetupStaticPoints()
 {
     // TODO: These are to be read from file
-    //m_iNumOfStaticPoints = 13;
-    //m_Static = new int[m_iNumOfStaticPoints];
-
-    //// Manually set the mass of the static points to zero
-    //// [here the four corners]
-    //const int points[] =
-    //{
-    //    0,
-    //    m_iStacks/2,
-    //    m_iStacks-1,
-
-    //    m_iStacks*(m_iSlices-m_iSlices/8),
-    //    m_iStacks*(m_iSlices-m_iSlices/4),
-    //    m_iStacks*(m_iSlices-3*m_iSlices/8),
-    //    m_iStacks*(m_iSlices-m_iSlices/2),
-    //    m_iStacks*(m_iSlices-5*m_iSlices/8),
-    //    m_iStacks*(m_iSlices-3*m_iSlices/4),
-    //    m_iStacks*(m_iSlices-7*m_iSlices/8),
-
-    //    m_iStacks*(m_iSlices-1),
-    //    m_iStacks*m_iSlices-m_iStacks/2,
-    //    m_iStacks*m_iSlices-1
-    //};
-
-    m_iNumOfStaticPoints = 9;
+#ifdef _DONT_STICK_TO_EDGES
+#ifdef _DEBUG
+	m_iNumOfStaticPoints = 9;
     m_Static = new int[m_iNumOfStaticPoints];
 
     // Manually set the mass of the static points to zero
@@ -163,12 +143,62 @@ void GOCPhysicsCloth::SetupStaticPoints()
         m_iStacks*m_iSlices-1
     };
 
-    for( int i=0; i<m_iNumOfStaticPoints; ++i )
+#else
+    m_iNumOfStaticPoints = 14;
+    m_Static = new int[m_iNumOfStaticPoints];
+
+    // Manually set the mass of the static points to zero
+    // [here the four corners]
+    const int points[] =
+    {
+        0,
+        m_iStacks/2,
+        m_iStacks-1,
+
+        m_iStacks*(m_iSlices-m_iSlices/8),
+        m_iStacks*(m_iSlices-m_iSlices/4),
+        m_iStacks*(m_iSlices-3*m_iSlices/8),
+		m_iStacks*(m_iSlices-m_iSlices/2),
+        m_iStacks*(m_iSlices-m_iSlices/2)+m_iStacks-1,
+        m_iStacks*(m_iSlices-5*m_iSlices/8),
+        m_iStacks*(m_iSlices-3*m_iSlices/4),
+        m_iStacks*(m_iSlices-7*m_iSlices/8),
+
+        m_iStacks*(m_iSlices-1),
+        m_iStacks*m_iSlices-m_iStacks/2,
+        m_iStacks*m_iSlices-1
+    };
+#endif
+
+	for( int i=0; i<m_iNumOfStaticPoints; ++i )
     {
         m_Static[i] = points[i];
         assert(m_Static[i]<m_iNumOfParticles);
         m_Particles[m_Static[i]].SetInverseMass(0.0f);
     }
+
+#else
+	m_iNumOfStaticPoints = 2*m_iStacks+m_iSlices-2;
+    m_Static = new int[m_iNumOfStaticPoints];
+
+	for(int i=0; i<m_iStacks; i++) {
+		m_Static[i] = i;
+		assert(m_Static[i]<m_iNumOfParticles);
+		m_Particles[m_Static[i]].SetInverseMass(0.0f);
+	}
+
+	for(int i=m_iStacks; i<m_iStacks*(m_iSlices-1); i+=m_iStacks) {
+		m_Static[i] = i;
+		assert(m_Static[i]<m_iNumOfParticles);
+		m_Particles[m_Static[i]].SetInverseMass(0.0f);
+	}
+
+	for(int i=m_iStacks*(m_iSlices-1); i<m_iStacks*m_iSlices; i++) {
+		m_Static[i] = i;
+		assert(m_Static[i]<m_iNumOfParticles);
+		m_Particles[m_Static[i]].SetInverseMass(0.0f);
+	}
+#endif
 }
 
 // ----------------------------------------------------------------------------
