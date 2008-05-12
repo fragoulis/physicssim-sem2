@@ -41,7 +41,7 @@ void IThread::Terminate()
     Stop();
 
     // Wait for it to stop
-	WaitForSingleObject( m_Handle, 5000 );
+	WaitForSingleObject( m_Handle, INFINITE );
 
     _LOG("Thread terminated!");
 	

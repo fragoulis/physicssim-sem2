@@ -164,7 +164,7 @@ template<class Type>
 void TQuaternion<Type>::FromSelf()
 {
     w( w() * 0.5f ); // angle / 2
-    const T mysin = sin( w() );
+    const Type mysin = sin( w() );
 
     // Setup rotation quaternion
     w( cos( w() ) );

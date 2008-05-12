@@ -53,6 +53,18 @@ void CVertexArrayManager::Init()
     plane->Create(true);
     MAP_INSERT( m_Arrays, "Wall", plane );
 
+	// ------------------------------------------------------------------------
+    CFG_LOAD("Floor");
+
+    CFG_2fv("Halfsize", size);
+    CFG_3fv("Normal", normal);
+    CFG_1i("Stacks", stacks);
+    CFG_1i("Slices", slices);
+    
+    plane = new CVAPlane( "Floor", size, normal, stacks, slices );
+    plane->Create(true);
+    MAP_INSERT( m_Arrays, "Floor", plane );
+
     // ------------------------------------------------------------------------
     CFG_LOAD("Cloth");
 

@@ -29,9 +29,11 @@ public:
     CubeControls();
 
     void CheckAngles();
-    void ReadAngles() { angles.Get( horizontalAngle, verticalAngle ); }
-    void AddAngles( float horizontal, float vertical ) { 
-        angles.Add( horizontal, vertical ); 
+    bool ReadAngles() { 
+		return angles.Get( horizontalAngle, verticalAngle ); 
+	}
+    bool AddAngles( float horizontal, float vertical ) { 
+        return angles.Add( horizontal, vertical ); 
     }
 
 public:

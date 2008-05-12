@@ -33,6 +33,7 @@ private:
     CGameObject *m_Planes[MAX_PLANES];
     CGameObject *m_Cloth;
     CGameObject *m_Shelf;
+	CGameObject *m_Floor;
     //CGameObject *m_Jelly;
 
     bool m_bPause;
@@ -40,6 +41,8 @@ private:
     bool m_bRestartClockFromFile;
     bool m_bRestartClock;
     CubeControls m_cube;
+
+	bool m_bIsReady;
 
 public:
     CPhysicsThread();
@@ -70,6 +73,8 @@ public:
     void WritePacket( CPacket &packet );
     void ReadPacket( CPacket &packet );
 
+	bool IsReady() const { return m_bIsReady; }
+
 private:
     virtual void OnStart();
     virtual void OnEnd();
@@ -82,6 +87,7 @@ private:
     void InitPlanes();
     void InitCloth();
     void InitShelf();
+	void InitFloor();
 
     // Control functions
     void AddBigSphere();

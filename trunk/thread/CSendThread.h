@@ -12,6 +12,7 @@ private:
     Streams m_clients;
 
     virtual void Run( void *lpArgs );
+	virtual void OnEnd();
 
 public:
     void addClient(SocketStream *stream) { m_clients.push_back(stream); }

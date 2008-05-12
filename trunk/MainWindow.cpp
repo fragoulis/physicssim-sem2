@@ -81,6 +81,9 @@ void MainWindow::OnCreate()
     m_Lights[0].TurnOn();
 
     MainApp::GetPhysics().Start(); // Safely start the physics thread
+
+	while( !MainApp::GetPhysics().IsReady() ) Sleep(10);
+
     //MainApp::GetBitmap().Start();
     MainApp::GetListener().Start();
 }
@@ -371,7 +374,7 @@ void MainWindow::OnDestroy()
     }
 
     MainApp::GetListener().Terminate();
-    MainApp::GetPhysics().Terminate();
+	MainApp::GetPhysics().Terminate();
     MainApp::GetBitmap().Terminate();
 
     Clock::Destroy();
@@ -405,9 +408,9 @@ void MainWindow::PrintStats()
     #define TEXT_Y startY-=deltaY
 
     glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "Delta: %.4f", (float)Clock::Get().GetTimeDelta() );
+    Printf( "Delta: %.4f", (float)Clock::_Get().GetTimeDelta() );
     glRasterPos2f( -1.0f, TEXT_Y );
-    Printf( "TimeStep: %.4f", MGRPhysics::Get().GetTimeStep() );
+    Printf( "TimeStep: %.4f", MGRPhysics::_Get().GetTimeStep() );
 
     int smallspheres, bigspheres;
     MainApp::GetPhysics().GetNumOfSpheres( smallspheres, bigspheres );

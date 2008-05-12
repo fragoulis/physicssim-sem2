@@ -5,8 +5,6 @@
 using namespace std;
 
 ofstream dout("serverdump.txt");
-ofstream dout2("listenerdump.txt");
-ofstream dout3("senddump.txt");
 
 // -----------------------------------------------------------------------------
 void CListeningThread::OnStart()
@@ -14,9 +12,9 @@ void CListeningThread::OnStart()
     CFG_SERVER_OPEN;
     CFG_LOAD("Server");
 
-    int clients;
-    CFG_1i("clients", clients);
-    m_clientPool.create(clients);
+    //int clients;
+    //CFG_1i("clients", clients);
+    //m_clientPool.create(clients);
 
     CFG_str("hostname", m_hostname);
     CFG_str("sendPort", m_sendPort);
@@ -58,41 +56,51 @@ void CListeningThread::Run( void *lpArgs )
 
         // Final parameter of Null causes statement to block
 		if( select(0, &readMasks, NULL, NULL, &timeout) < 0 ) {
-			dout2 << "Listener port error: " << WSAGetLastError() << endl;
+			dout << "Listener port error: " << WSAGetLastError() << endl;
 			break;
 		}
 
 		if( FD_ISSET (sendServer.handle(), &readMasks) ) 
         {
-			SocketStream *newStream = m_clientPool.get();
-            sendServer.accept(*newStream);
-
-            // push the stream to the sending list
-            m_send.addClient(newStream);
-
-            dout3 << "New sending client" << endl;
+			SocketStream *newStream = new SocketStream;
+			dout << "SocketSend created" << endl;
+            if( sendServer.accept(*newStream) )
+			{
+				dout << "SocketSend(" << newStream->handle() << ") accepted" << endl;
+				// push the stream to the sending list
+				m_send.addClient(newStream);
+			}
+			else
+			{
+				delete newStream;
+				newStream = 0;
+			}
 		} 
         else if( FD_ISSET (recvServer.handle(), &readMasks) ) 
         {
-			SocketStream *newStream = m_clientPool.get();
-            recvServer.accept(*newStream);
-
-            // push the stream to the recieving list
-            m_recv.addClient(newStream);
-
-            dout2 << "New recieving client" << endl;
+			SocketStream *newStream = new SocketStream;
+			dout << "SocketRecv created" << endl;
+            if( recvServer.accept(*newStream) )
+			{
+				dout << "SocketRecv(" << newStream->handle() << ") accepted" << endl;
+				// push the stream to the recieving list
+				m_recv.addClient(newStream);
+			}
+			else
+			{
+				delete newStream;
+				newStream = 0;
+			}
 		} 
-        //else {
-		//	dout << "Unknown port activity" << endl;
-		//	break;
-		//}
-    }
+	} // while( )
 
 } // Run()
 
 // -----------------------------------------------------------------------------
 void CListeningThread::OnEnd()
 {
+	dout << __FUNCTION__ << endl;
     m_send.Terminate();
     m_recv.Terminate();
+	//Sleep(20000);
 }

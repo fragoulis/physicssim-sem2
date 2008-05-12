@@ -13,11 +13,7 @@ bool CubeAngles::Get( float &horizontal, float &vertical ) const
            horizontal = m_fHorizontal;
            vertical = m_fVertical;
         }
-        __FINALLY 
-        {
-            ReleaseWrite();
-        }
-
+        __FINALLY { ReleaseWrite(); }
         return true;
     }
 
@@ -33,11 +29,7 @@ bool CubeAngles::Set( float horizontal, float vertical )
            m_fHorizontal = horizontal;
            m_fVertical = vertical;
         }
-        __FINALLY 
-        {
-            ReleaseAll();
-        }
-
+        __FINALLY { ReleaseAll(); }
         return true;
     }
 
@@ -53,11 +45,7 @@ bool CubeAngles::Add( float horizontal, float vertical )
            m_fHorizontal += horizontal;
            m_fVertical += vertical;
         }
-        __FINALLY 
-        {
-            ReleaseAll();
-        }
-
+        __FINALLY { ReleaseAll(); }
         return true;
     }
 
