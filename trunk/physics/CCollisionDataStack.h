@@ -1,5 +1,6 @@
 #pragma once
 #include "CCollisionData.h"
+#include "../Util/assert.h"
 #include <vector>
 
 namespace tlib
@@ -40,7 +41,9 @@ public:
     //! Returns the next available collisions data address
     CCollisionData* GetFreeSpot() 
     { 
-        if( HaveSpots() <= 0 ) return 0;
+		if( HaveSpots() <= 0 ) {
+			fassert("You shouldnt run out of collisions!!");
+		}
         return &m_CollisionData[m_size]; 
     }
 

@@ -2,6 +2,11 @@
 #include "../Util/assert.h"
 using namespace tlib::physics;
 
+#ifndef _DEBUG
+#define _USE_MIDPOINT
+//#define _USE_RK4
+#endif
+
 // Gravity integration and small velocity damping by default
 CParticle::CParticle():
 m_vPosition(0.0f,0.0f,0.0f),
@@ -22,9 +27,13 @@ void CParticle::Integrate( float delta )
     
     if( m_fInverseMass > 0.0f ) 
     {
-        IntegrateEuler( delta );
-        //IntegrateMidpoint( delta );
-        //IntegrateRK4( delta );
+#ifdef _USE_MIDPOINT
+        IntegrateMidpoint( delta );
+#elif _USE_RK4
+        IntegrateRK4( delta );
+#else
+		IntegrateEuler( delta );
+#endif
     }
 
     m_vForceAccum.Clear();
